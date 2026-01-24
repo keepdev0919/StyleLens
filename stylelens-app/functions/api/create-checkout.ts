@@ -37,14 +37,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             headers: { "Content-Type": "application/json" },
         });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error("Polar Checkout Error:", error);
-        return new Response(JSON.stringify({
-            error: "Failed to create checkout session",
-            details: error.message,
-            stack: error.stack,
-            envCheck: !!env.POLAR_ACCESS_TOKEN // Check if token exists
-        }), {
+        return new Response(JSON.stringify({ error: "Failed to create checkout session" }), {
             status: 500,
             headers: { "Content-Type": "application/json" },
         });
