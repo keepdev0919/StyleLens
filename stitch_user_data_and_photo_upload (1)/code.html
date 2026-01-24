@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>StyleLens Analysis Report</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ff4db8",
+                        "primary-dark": "#e6359d",
+                        "background-light": "#ffffff",
+                        "accent-pink": "#fff0f9",
+                        "border-pink": "#ffdef2",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "serif": ["Playfair Display", "serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1.25rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        body {
+            font-family: "Space Grotesk", sans-serif;
+            background-color: #ffffff;
+        }
+        .section-card {
+            background: #ffffff;
+            border: 1px solid #ffdef2;
+            box-shadow: 0 10px 40px -15px rgba(255, 77, 184, 0.08);
+        }
+        .lensa-title {
+            font-family: "Playfair Display", serif;
+        }
+        .pink-gradient-bg {
+            background: linear-gradient(135deg, #ff4db8 0%, #ff80cc 100%);
+        }
+        .header-logo-gradient {
+            background: linear-gradient(135deg, #ff4db8 0%, #ff1a8c 100%);
+        }
+    </style>
+</head>
+<body class="bg-white text-slate-800 min-h-screen">
+<header class="sticky top-0 z-50 w-full border-b border-pink-50 bg-white/95 backdrop-blur-md">
+<div class="max-w-[1200px] mx-auto px-6 h-20 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="header-logo-gradient p-2 rounded-xl shadow-sm">
+<span class="material-symbols-outlined text-white text-xl block">flare</span>
+</div>
+<h2 class="text-2xl font-bold tracking-tight text-slate-900">Style<span class="text-primary">Lens</span></h2>
+</div>
+<nav class="hidden md:flex items-center gap-10">
+<a class="text-sm font-semibold hover:text-primary transition-colors text-slate-600" href="#">Analysis</a>
+<a class="text-sm font-semibold hover:text-primary transition-colors text-slate-600" href="#">Virtual Wardrobe</a>
+<a class="text-sm font-semibold hover:text-primary transition-colors text-slate-600" href="#">Collections</a>
+<a class="text-sm font-semibold hover:text-primary transition-colors text-slate-600" href="#">Settings</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="hidden sm:flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-full text-sm font-bold hover:bg-primary-dark transition-all shadow-md hover:shadow-lg">
+<span class="material-symbols-outlined text-sm">download_2</span>
+<span>Download Report</span>
+</button>
+<div class="w-10 h-10 rounded-full border-2 border-primary/20 p-0.5">
+<div class="w-full h-full rounded-full bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD4-thXrL2UP_5udNTXFiHyGPJ8XUuxqVhd9sMvhszgx3LMYv2pyoh5el7cGB_tQgOlCJ7lGbpwO4DESS2ZUCN-u9vFpGG13SizqNH2hE3B2vAth2a2CeMKguwlB9ven1XedBi34dHeZIjYc5ZZR8Wjj8eDdudOiKPHhBkyDLge5Fex2xbgKEOTD6d_RKjAiNjSIZpLijx85Bse_-GzMTuDWzQ9wAJrt4vG1gnmrVe2gdgw1Etkr3aTGDrmESheZpgVrz7cTS6w_SoQ");'></div>
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-[1200px] mx-auto px-6 py-12">
+<div class="flex flex-col md:flex-row justify-between items-end gap-8 mb-16">
+<div class="max-w-2xl">
+<div class="flex items-center gap-2 mb-4">
+<span class="px-4 py-1.5 bg-accent-pink text-primary text-[11px] font-bold uppercase tracking-[0.2em] rounded-full border border-border-pink">Analysis Intelligence</span>
+</div>
+<h1 class="text-5xl md:text-6xl font-bold tracking-tight mb-6 text-slate-900">
+                Your <span class="text-primary lensa-title italic">StyleLens Report</span>
+</h1>
+<p class="text-slate-500 text-lg leading-relaxed max-w-xl">A personalized breakdown of your unique aesthetic profile, based on high-fidelity facial geometry and body proportion analysis.</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-6 py-3 bg-white text-slate-700 border border-slate-200 rounded-full text-sm font-bold hover:border-primary hover:text-primary transition-all">
+<span class="material-symbols-outlined text-sm">ios_share</span> Share Results
+            </button>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+<div class="lg:col-span-8 flex flex-col gap-10">
+<section class="section-card rounded-2xl overflow-hidden">
+<div class="p-8 border-b border-pink-50 flex items-center justify-between">
+<div>
+<h2 class="text-2xl font-bold text-slate-900 lensa-title">Recommended Outfits</h2>
+<p class="text-slate-400 text-sm mt-1">Curated looks based on your body analysis</p>
+</div>
+<div class="flex bg-slate-50 p-1 rounded-full border border-slate-100">
+<button class="px-6 py-1.5 bg-white text-primary text-xs font-bold rounded-full shadow-sm">All</button>
+<button class="px-6 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700">Office</button>
+<button class="px-6 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700">Evening</button>
+</div>
+</div>
+<div class="p-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
+<div class="group relative overflow-hidden rounded-2xl aspect-[3/4] shadow-md">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" style='background-image: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 60%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuD0uUUVC1-OIC3hkeqRNYrTRtMEyf5VoXNaJYkSuD7SF-i5HV14-FBUj6WoZRWfy8ymKOvhZKv44_XH7VH8EWucLbd_WaUliM6TxT1wPWx5U8lKDQCHu7_J5ibm4-a8pOzeyevrR0NJJsjqedVMkyiLSs5trbTmzLCE2614c96OvUOSPyBTdRuIMtpsqV1k9cXxgE7G4mxJLPGJTVQ280Dw5m7WbXI-CN_Q3UNUJJCXK53RCYNd10atMFvXBo26PrjaIfO0BwQ7Qx2W");'></div>
+<div class="absolute bottom-0 left-0 p-8 w-full">
+<div class="flex items-center gap-2 mb-3">
+<span class="px-3 py-1 bg-white/20 backdrop-blur-md text-[10px] font-bold uppercase rounded-full text-white border border-white/30">Business Edge</span>
+</div>
+<h3 class="text-white text-2xl font-bold mb-2">Modern Executive</h3>
+<p class="text-white/80 text-sm leading-relaxed">Structural tailoring emphasizing your posture and shoulders.</p>
+</div>
+</div>
+<div class="group relative overflow-hidden rounded-2xl aspect-[3/4] shadow-md">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" style='background-image: linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 60%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuAyOAF-s6ww8n2Es7fFCoZphSiiMqISj79BGAONSBMrnhYi4esrtCbV5Uwre_FL8p1UFBNNUDWOa46Y2Mey-txraIK3Kzba_Iq7mnpXLH5ySQldyW5dCquivtp-8GtoEu7_rTgYZK6WYLSB4j8Y4HAetnpxWhAqs0iw83HZmt0bslnwesoBXj9wWhlwPlvNBjNlHJYE2r6w76nNlmGq1GrF2YPJHZr9uoNw88oZuy0NAMxWeNAepfWBTSVcFkTHWCU22YHQAavJ8PZT");'></div>
+<div class="absolute bottom-0 left-0 p-8 w-full">
+<div class="flex items-center gap-2 mb-3">
+<span class="px-3 py-1 bg-primary text-[10px] font-bold uppercase rounded-full text-white">Daily Pick</span>
+</div>
+<h3 class="text-white text-2xl font-bold mb-2">Urban Minimalist</h3>
+<p class="text-white/80 text-sm leading-relaxed">Fluid fabrics in earthy tones to balance your sharp jawline.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="section-card rounded-2xl p-10">
+<div class="flex flex-col md:flex-row gap-12">
+<div class="md:w-1/3">
+<div class="inline-flex p-2 bg-accent-pink rounded-lg mb-4 text-primary">
+<span class="material-symbols-outlined">palette</span>
+</div>
+<h2 class="text-2xl font-bold mb-4 text-slate-900 lensa-title">Color Palette</h2>
+<p class="text-slate-500 text-sm leading-relaxed mb-8">Your seasonal type is <span class="text-primary font-bold">Cool Summer</span>. These shades enhance your skin's natural luminance.</p>
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+<span class="text-sm font-semibold text-slate-700">Imperial Navy</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+<span class="text-sm font-semibold text-slate-700">Deep Emerald</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[16px]">check</span>
+</div>
+<span class="text-sm font-semibold text-slate-700">Soft Charcoal</span>
+</div>
+</div>
+</div>
+<div class="md:w-2/3 grid grid-cols-2 sm:grid-cols-4 gap-6">
+<div class="flex flex-col gap-3">
+<div class="h-28 w-full rounded-2xl bg-[#0f172a] shadow-sm ring-1 ring-inset ring-black/5"></div>
+<span class="text-[11px] font-mono text-center text-slate-400">#0F172A</span>
+</div>
+<div class="flex flex-col gap-3">
+<div class="h-28 w-full rounded-2xl bg-[#ff4db8] shadow-sm ring-1 ring-inset ring-black/5"></div>
+<span class="text-[11px] font-mono text-center text-slate-400">#FF4DB8</span>
+</div>
+<div class="flex flex-col gap-3">
+<div class="h-28 w-full rounded-2xl bg-[#065f46] shadow-sm ring-1 ring-inset ring-black/5"></div>
+<span class="text-[11px] font-mono text-center text-slate-400">#065F46</span>
+</div>
+<div class="flex flex-col gap-3">
+<div class="h-28 w-full rounded-2xl bg-[#64748b] shadow-sm ring-1 ring-inset ring-black/5"></div>
+<span class="text-[11px] font-mono text-center text-slate-400">#64748B</span>
+</div>
+<div class="flex flex-col gap-3">
+<div class="h-28 w-full rounded-2xl bg-[#f8fafc] border border-slate-100 shadow-sm"></div>
+<span class="text-[11px] font-mono text-center text-slate-400">#F8FAFC</span>
+</div>
+<div class="flex flex-col gap-3">
+<div class="h-28 w-full rounded-2xl bg-[#8b5cf6] shadow-sm"></div>
+<span class="text-[11px] font-mono text-center text-slate-400">#8B5CF6</span>
+</div>
+<div class="flex flex-col gap-3">
+<div class="h-28 w-full rounded-2xl bg-[#1e293b] shadow-sm"></div>
+<span class="text-[11px] font-mono text-center text-slate-400">#1E293B</span>
+</div>
+<div class="flex flex-col gap-3">
+<div class="h-28 w-full rounded-2xl bg-[#ec4899] shadow-sm"></div>
+<span class="text-[11px] font-mono text-center text-slate-400">#EC4899</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+<div class="lg:col-span-4 flex flex-col gap-10">
+<section class="section-card rounded-2xl overflow-hidden">
+<div class="p-8">
+<div class="flex items-center gap-3 mb-6">
+<div class="p-2 bg-accent-pink rounded-lg text-primary">
+<span class="material-symbols-outlined">face</span>
+</div>
+<h2 class="text-2xl font-bold text-slate-900 lensa-title">Grooming Tips</h2>
+</div>
+<div class="bg-accent-pink rounded-2xl p-6 mb-8 border border-border-pink text-center">
+<span class="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-2 block">Face Archetype</span>
+<div class="text-2xl font-bold text-slate-900">DIAMOND / STRONG</div>
+</div>
+<div class="space-y-8">
+<div class="flex items-start gap-5 group">
+<div class="w-20 h-20 shrink-0 rounded-2xl bg-cover bg-center shadow-sm border-2 border-white group-hover:border-primary/30 transition-colors" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAo-jaf6coyED45VWZAF23C6K7aLeZNmzVsMB8lDPbB7JLbKbtTGpUyVfJuokrMNEV1Q_Bi4p3EZHAcUBW4dc9NQwUx97Jw1mRZhWLkURHZyYHY0-QWAbBpzgJvrYsg6J4g1ktH3jG134af0YbsCZY9ekQ1rjkjQS8olnt9okRjV5iW5iVa3qS8ZSeeNB7NSzBkjxDxX9jfYlXWQXJAhg6dSQ7N-qovxWPDJZ-nVlInTwUE6Dzsg07iA_7cFaC7nlT1f_uWLe5DPPWo");'></div>
+<div>
+<h4 class="font-bold text-slate-900 text-base">Classic Taper</h4>
+<p class="text-xs text-slate-500 mt-2 leading-relaxed">Soften your temple area with a gradual fade. Best for formal aesthetics.</p>
+</div>
+</div>
+<div class="flex items-start gap-5 group">
+<div class="w-20 h-20 shrink-0 rounded-2xl bg-cover bg-center shadow-sm border-2 border-white group-hover:border-primary/30 transition-colors" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCmuv14M5OZbgWO_8Ej8p6a2-vGzhJJ77y1vw3UfnZExNSK23N34vJ0cT2foJmaKI3oz9XeVTFWHz9dil5N5Mke_H_ONCcRAJTH24oMVS7V-SIIbk0J-N95wQT6HS6Mbp4j91pOKhN753IntJO_P3OWBAGN5Mvxej2cQWqwLEws-1WuhtEiDi9sf_08WJzg2YZrtw96tfLQ89RwoA3PRTPWp7ta2IJFu59wKZ8I_tPkZMnBQMWDv8XlSrOO0w3nATtJfGoDm5LszGgZ");'></div>
+<div>
+<h4 class="font-bold text-slate-900 text-base">Modern Pompadour</h4>
+<p class="text-xs text-slate-500 mt-2 leading-relaxed">Adds vertical height to elongate your profile. Recommended styling: Matte Wax.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-primary/5 p-5 border-t border-border-pink">
+<p class="text-[11px] font-bold text-center text-primary uppercase tracking-[0.15em]">Refinement Level: Premium</p>
+</div>
+</section>
+<section class="section-card rounded-2xl p-8">
+<h2 class="text-2xl font-bold mb-8 text-slate-900 lensa-title">Body Analysis</h2>
+<div class="space-y-8">
+<div>
+<div class="flex justify-between text-[11px] font-bold mb-3 text-slate-400 tracking-wider">
+<span>UPPER BODY RATIO</span>
+<span class="text-primary">GOLDEN (1.61)</span>
+</div>
+<div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 85%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-[11px] font-bold mb-3 text-slate-400 tracking-wider">
+<span>STANCE SYMMETRY</span>
+<span class="text-primary">94% EXCELLENT</span>
+</div>
+<div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 94%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-[11px] font-bold mb-3 text-slate-400 tracking-wider">
+<span>COLOR ADAPTABILITY</span>
+<span class="text-primary">HIGH</span>
+</div>
+<div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 72%"></div>
+</div>
+</div>
+</div>
+<div class="mt-10 pt-8 border-t border-pink-50">
+<div class="flex items-start gap-4 p-5 rounded-2xl bg-accent-pink border border-border-pink">
+<span class="material-symbols-outlined text-primary text-2xl mt-0.5">auto_awesome</span>
+<p class="text-xs leading-relaxed text-slate-600 font-medium italic">"Based on your limb-to-torso ratio, mid-rise trousers with a slight taper will create the most elegant visual line."</p>
+</div>
+</div>
+</section>
+<div class="rounded-2xl pink-gradient-bg p-8 text-white text-center shadow-xl shadow-primary/20">
+<h3 class="text-2xl font-bold mb-3 lensa-title">The Complete Style Bible</h3>
+<p class="text-sm text-white/90 mb-8 leading-relaxed">Unlock your 50+ page customized dossier with brand-specific shopping lists and fabric guides.</p>
+<button class="w-full py-4 bg-white text-primary rounded-full font-bold text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all">
+                    Upgrade to Premium ($19)
+                </button>
+</div>
+</div>
+</div>
+</main>
+<footer class="mt-24 border-t border-pink-50 py-16 px-6 bg-slate-50">
+<div class="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
+<div class="flex items-center gap-2 grayscale opacity-60">
+<div class="bg-slate-400/20 p-1.5 rounded-lg">
+<span class="material-symbols-outlined text-slate-600 text-xl block">flare</span>
+</div>
+<h2 class="text-lg font-bold tracking-tight text-slate-600">StyleLens © 2024</h2>
+</div>
+<div class="flex gap-12">
+<a class="text-sm font-medium text-slate-400 hover:text-primary transition-colors" href="#">Ethics Policy</a>
+<a class="text-sm font-medium text-slate-400 hover:text-primary transition-colors" href="#">Usage Terms</a>
+<a class="text-sm font-medium text-slate-400 hover:text-primary transition-colors" href="#">Support Desk</a>
+</div>
+</div>
+</footer>
+
+</body></html>
