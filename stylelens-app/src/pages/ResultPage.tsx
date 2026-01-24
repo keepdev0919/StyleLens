@@ -1,4 +1,4 @@
-import { Link, useLocation, Navigate } from 'react-router-dom';
+import { useLocation, Navigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
@@ -42,7 +42,7 @@ interface AnalysisResult {
 
 export default function ResultPage() {
     const location = useLocation();
-    const { userData, analysisResult } = location.state as { userData: any, analysisResult: AnalysisResult } || {};
+    const { analysisResult } = location.state as { userData: any, analysisResult: AnalysisResult } || {};
 
     // Redirect if no data (e.g. direct access)
     // For development, you might want to comment this out and use mock data
@@ -58,9 +58,39 @@ export default function ResultPage() {
     // For now, let's assume valid data or use placeholders.
     const userImageUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuD4-thXrL2UP_5udNTXFiHyGPJ8XUuxqVhd9sMvhszgx3LMYv2pyoh5el7cGB_tQgOlCJ7lGbpwO4DESS2ZUCN-u9vFpGG13SizqNH2hE3B2vAth2a2CeMKguwlB9ven1XedBi34dHeZIjYc5ZZR8Wjj8eDdudOiKPHhBkyDLge5Fex2xbgKEOTD6d_RKjAiNjSIZpLijx85Bse_-GzMTuDWzQ9wAJrt4vG1gnmrVe2gdgw1Etkr3aTGDrmESheZpgVrz7cTS6w_SoQ"; // Placeholder/Profile
 
+    // Handlers
+    const handleDownload = () => {
+        window.print();
+    };
+
+    const handleShare = async () => {
+        const shareData = {
+            title: 'My StyleLens Report',
+            text: `Check out my personalized style analysis! Season: ${palette.season}`,
+            url: window.location.href,
+        };
+
+        if (navigator.share && navigator.canShare(shareData)) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                console.error('Error sharing:', err);
+            }
+        } else {
+            // Fallback to clipboard
+            try {
+                await navigator.clipboard.writeText(window.location.href);
+                alert('Link copied to clipboard!');
+            } catch (err) {
+                console.error('Failed to copy link:', err);
+                alert('Failed to copy link. Please copy the URL manually.');
+            }
+        }
+    };
+
     return (
         <div className="bg-white text-slate-800 min-h-screen">
-            <Header variant="result" userImageUrl={userImageUrl} />
+            <Header variant="result" userImageUrl={userImageUrl} onDownload={handleDownload} />
 
             <main className="max-w-[1200px] mx-auto px-6 py-12">
                 {/* Page Header */}
@@ -79,7 +109,10 @@ export default function ResultPage() {
                         </p>
                     </div>
                     <div className="flex gap-3">
-                        <button className="flex items-center gap-2 px-6 py-3 bg-white text-slate-700 border border-slate-200 rounded-full text-sm font-bold hover:border-primary hover:text-primary transition-all">
+                        <button
+                            onClick={handleShare}
+                            className="flex items-center gap-2 px-6 py-3 bg-white text-slate-700 border border-slate-200 rounded-full text-sm font-bold hover:border-primary hover:text-primary transition-all"
+                        >
                             <span className="material-symbols-outlined text-sm">ios_share</span> Share Results
                         </button>
                     </div>
