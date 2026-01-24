@@ -12,6 +12,8 @@ export default function InputPage() {
     });
     const [photoPreview, setPhotoPreview] = useState<string>('');
 
+    const [isLoading, setIsLoading] = useState(false);
+
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -24,25 +26,62 @@ export default function InputPage() {
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // TODO: 여기서 Cloudflare Pages Functions API 호출
-        // TODO: ChatGPT API로 분석 요청
-        // TODO: 분석 결과를 받아서 결과 페이지로 전달
+        if (!photoPreview) {
+            alert("Please upload a photo first.");
+            return;
+        }
 
-        // 임시로 결과 페이지로 이동 (나중에 실제 데이터 전달)
-        navigate('/result', {
-            state: {
-                userData: formData,
-                // 나중에 API 응답 데이터 추가
+        setIsLoading(true);
+
+        try {
+            const response = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    photo: photoPreview,
+                    height: formData.height,
+                    weight: formData.weight,
+                }),
+            });
+
+            if (!response.ok) {
+                const errData = await response.json() as any;
+                throw new Error(errData.error || 'Analysis failed');
             }
-        });
+
+            const data = await response.json();
+
+            navigate('/result', {
+                state: {
+                    userData: formData,
+                    analysisResult: data,
+                }
+            });
+
+        } catch (error) {
+            console.error(error);
+            alert("Failed to analyze style. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
         <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-white">
             <Header variant="landing" />
+
+            {isLoading && (
+                <div className="fixed inset-0 z-[60] bg-white/80 backdrop-blur-md flex flex-col items-center justify-center">
+                    <div className="w-20 h-20 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-8"></div>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-2">Analyzing Your Style</h3>
+                    <p className="text-slate-500 font-medium animate-pulse">Consulting our AI stylists...</p>
+                </div>
+            )}
 
             <main className="flex-grow pt-24 pb-16">
                 <div className="max-w-[800px] mx-auto px-6">
@@ -134,9 +173,10 @@ export default function InputPage() {
                         {/* Submit Button */}
                         <button
                             type="submit"
-                            className="w-full bg-primary hover:opacity-90 text-white text-xl font-bold px-12 py-5 rounded-full transition-all shadow-xl shadow-primary/30"
+                            disabled={isLoading}
+                            className="w-full bg-primary hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xl font-bold px-12 py-5 rounded-full transition-all shadow-xl shadow-primary/30"
                         >
-                            Analyze My Style
+                            {isLoading ? 'Analyzing...' : 'Analyze My Style'}
                         </button>
                     </form>
                 </div>
