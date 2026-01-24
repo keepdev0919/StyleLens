@@ -46,7 +46,7 @@ export default function Header({ variant = 'landing', userImageUrl }: HeaderProp
         <header className="fixed top-0 z-50 w-full glass-nav border-b border-black/5 px-6 lg:px-20 py-4">
             <div className="max-w-[1280px] mx-auto flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <Link to="/" className="logo-text text-2xl tracking-tight cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-2">
+                    <Link to="/" className="logo-text text-2xl tracking-tight cursor-pointer hover:opacity-80 transition-opacity flex items-center">
                         <span className="font-extrabold text-black">Style</span>
                         <span className="font-normal text-primary">Lens</span>
                     </Link>

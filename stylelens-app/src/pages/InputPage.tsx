@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
@@ -12,7 +12,37 @@ export default function InputPage() {
     });
     const [photoPreview, setPhotoPreview] = useState<string>('');
 
+    const [searchParams] = useSearchParams();
+    const hasEffectRun = useRef(false);
+
     const [isLoading, setIsLoading] = useState(false);
+
+    // Restore state and trigger analysis if returning from successful payment
+    useEffect(() => {
+        if (hasEffectRun.current) return;
+
+        const paymentStatus = searchParams.get('payment');
+        if (paymentStatus === 'success') {
+            hasEffectRun.current = true;
+            const savedData = sessionStorage.getItem('pending_style_analysis');
+            if (savedData) {
+                try {
+                    const parsed = JSON.parse(savedData);
+                    setFormData(parsed.formData);
+                    setPhotoPreview(parsed.photoPreview);
+
+                    // Trigger analysis with restored data
+                    // We need to use the parsed data directly because state updates are async
+                    performAnalysisWithData(parsed.formData, parsed.photoPreview);
+
+                    // Optional: Clear storage after success (or keep it briefly if retrying needed)
+                    sessionStorage.removeItem('pending_style_analysis');
+                } catch (e) {
+                    console.error("Failed to restore session data", e);
+                }
+            }
+        }
+    }, [searchParams]);
 
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -23,6 +53,43 @@ export default function InputPage() {
                 setPhotoPreview(reader.result as string);
             };
             reader.readAsDataURL(file);
+        }
+    };
+
+    const performAnalysisWithData = async (data: typeof formData, preview: string) => {
+        setIsLoading(true);
+
+        try {
+            const response = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    photo: preview,
+                    height: data.height,
+                    weight: data.weight,
+                }),
+            });
+
+            if (!response.ok) {
+                const errData = await response.json() as any;
+                throw new Error(errData.error || 'Analysis failed');
+            }
+
+            const analysisResult = await response.json();
+
+            navigate('/result', {
+                state: {
+                    userData: data,
+                    analysisResult: analysisResult,
+                }
+            });
+
+        } catch (error) {
+            console.error(error);
+            alert("Failed to analyze style. Please try again.");
+            setIsLoading(false);
         }
     };
 
@@ -37,36 +104,31 @@ export default function InputPage() {
         setIsLoading(true);
 
         try {
-            const response = await fetch('/api/analyze', {
+            // 1. Save state to sessionStorage
+            sessionStorage.setItem('pending_style_analysis', JSON.stringify({
+                formData,
+                photoPreview
+            }));
+
+            // 2. Create Checkout Session
+            const res = await fetch('/api/create-checkout', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify({
-                    photo: photoPreview,
-                    height: formData.height,
-                    weight: formData.weight,
+                    successUrl: window.location.origin + '/input?payment=success'
                 }),
+                headers: { 'Content-Type': 'application/json' }
             });
 
-            if (!response.ok) {
-                const errData = await response.json() as any;
-                throw new Error(errData.error || 'Analysis failed');
-            }
+            if (!res.ok) throw new Error('Failed to initialize payment');
 
-            const data = await response.json();
+            const { url } = await res.json();
 
-            navigate('/result', {
-                state: {
-                    userData: formData,
-                    analysisResult: data,
-                }
-            });
+            // 3. Redirect to Polar Hosted Checkout
+            window.location.href = url;
 
         } catch (error) {
-            console.error(error);
-            alert("Failed to analyze style. Please try again.");
-        } finally {
+            console.error("Payment Error:", error);
+            alert("Payment failed initialization.");
             setIsLoading(false);
         }
     };
@@ -176,7 +238,7 @@ export default function InputPage() {
                             disabled={isLoading}
                             className="w-full bg-primary hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xl font-bold px-12 py-5 rounded-full transition-all shadow-xl shadow-primary/30"
                         >
-                            {isLoading ? 'Analyzing...' : 'Analyze My Style'}
+                            {isLoading ? 'Processing...' : 'Analyze My Style ($4.99)'}
                         </button>
                     </form>
                 </div>
