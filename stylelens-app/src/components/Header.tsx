@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom';
 interface HeaderProps {
     variant?: 'landing' | 'result';
     userImageUrl?: string;
+    onDownload?: () => void;
 }
 
-export default function Header({ variant = 'landing', userImageUrl }: HeaderProps) {
+export default function Header({ variant = 'landing', userImageUrl, onDownload }: HeaderProps) {
     if (variant === 'result') {
         return (
             <header className="sticky top-0 z-50 w-full border-b border-pink-50 bg-white/95 backdrop-blur-md">
@@ -27,7 +28,10 @@ export default function Header({ variant = 'landing', userImageUrl }: HeaderProp
                         <a className="text-sm font-semibold hover:text-primary transition-colors text-slate-600" href="#">Settings</a>
                     </nav>
                     <div className="flex items-center gap-4">
-                        <button className="hidden sm:flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-full text-sm font-bold hover:bg-primary-dark transition-all shadow-md hover:shadow-lg">
+                        <button
+                            onClick={onDownload}
+                            className="hidden sm:flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-full text-sm font-bold hover:bg-primary-dark transition-all shadow-md hover:shadow-lg"
+                        >
                             <span className="material-symbols-outlined text-sm">download_2</span>
                             <span>Download Report</span>
                         </button>
