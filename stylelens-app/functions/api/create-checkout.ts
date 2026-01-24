@@ -19,7 +19,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
         const polar = new Polar({
             accessToken: token,
-            server: "sandbox", // Default to sandbox for dev, change to production based on env if needed
+            server: "production", // Default to sandbox for dev, change to production based on env if needed
         });
 
         const { successUrl } = await request.json() as { successUrl?: string };
@@ -29,7 +29,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         const finalSuccessUrl = successUrl || `${origin}/input?payment=success`;
 
         const result = await polar.checkouts.create({
-            products: ["83a856e4-be24-4282-b3e7-647c165de7f6"],
+            products: ["e1403b39-214e-427d-863c-0dbea81cc9d9"],
             successUrl: finalSuccessUrl,
         });
 
