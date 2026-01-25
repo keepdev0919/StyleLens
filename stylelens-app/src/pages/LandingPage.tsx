@@ -9,48 +9,117 @@ export default function LandingPage() {
 
             <main className="flex-grow pt-24">
                 {/* Hero Section */}
-                <section className="relative px-6 lg:px-20 py-16 lg:py-28">
-                    <div className="max-w-[1280px] mx-auto flex flex-col items-center text-center">
-                        <div className="flex flex-col gap-10 max-w-4xl">
-                            <h1 className="hero-title text-6xl lg:text-8xl font-black leading-tight text-black">
-                                Discover Your Perfect Look with <span className="text-primary italic">StyleLens</span>
+                {/* Hero Section - Option 1: Split Layout */}
+                <section className="relative px-6 lg:px-20 py-12 lg:py-20 overflow-hidden">
+                    <div className="max-w-[1280px] mx-auto grid lg:grid-cols-12 gap-12 items-center">
+
+                        {/* Left Content (Text) - Span 7 */}
+                        <div className="lg:col-span-7 flex flex-col gap-8 text-center lg:text-left z-10">
+                            <h1 className="hero-title text-5xl lg:text-7xl font-black leading-[1.1] text-black tracking-tight">
+                                Discover Your <br className="hidden lg:block" />
+                                Perfect Look with <br className="hidden lg:block" />
+                                <span className="text-primary italic relative inline-block">
+                                    StyleLens
+                                    <svg className="absolute w-full h-3 -bottom-1 left-0 text-primary/20" viewBox="0 0 100 10" preserveAspectRatio="none">
+                                        <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
+                                    </svg>
+                                </span>
                             </h1>
-                            <p className="text-xl lg:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed font-medium">
+                            <p className="text-xl text-gray-600 leading-relaxed font-medium max-w-2xl mx-auto lg:mx-0">
                                 AI-powered fashion and grooming analysis tailored to your unique body and style.
                             </p>
-                            <div className="flex flex-col sm:flex-row gap-4 pt-4 justify-center">
+                            <div className="flex flex-col sm:flex-row gap-4 pt-2 justify-center lg:justify-start">
                                 <Link to="/input">
-                                    <button className="bg-primary hover:opacity-90 text-white text-xl font-bold px-14 py-5 rounded-full transition-all shadow-xl shadow-primary/30">
+                                    <button className="bg-primary hover:opacity-90 text-white text-lg font-bold px-10 py-4 rounded-full transition-all shadow-xl shadow-primary/30 flex items-center gap-2 mx-auto lg:mx-0">
                                         Start Your Style Journey
+                                        <span className="material-symbols-outlined text-sm">arrow_forward</span>
                                     </button>
                                 </Link>
                             </div>
+
+                            {/* Trust Badges */}
+                            <div className="flex items-center gap-6 justify-center lg:justify-start pt-4 opacity-80">
+                                <div className="flex -space-x-3">
+                                    {[1, 2, 3, 4].map(i => (
+                                        <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-gray-200"></div>
+                                    ))}
+                                </div>
+                                <div className="text-sm font-semibold text-gray-500">
+                                    Join our Styling Community
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Hero Image */}
-                        <div className="mt-20 w-full max-w-5xl">
-                            <div className="relative group">
-                                <div className="absolute -inset-4 bg-primary/5 rounded-[2.5rem] blur-2xl"></div>
-                                <div className="relative w-full aspect-[16/9] overflow-hidden rounded-[2rem] bg-gray-100 border border-black/5">
-                                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDA20KLVTgqU8RwMtomH8bqEYnnngeBGDA0p22HE7NYI3l1mkP21FA5YviC7iecmNokwiRLSupGYGvoI2TKsmnZO03sa1aJrumxzXRBWnezvavamgRqKItf7oGiwumjBnzCy8guRcerwSvfYcCmWz62AJqdZBqz1_Pyq8UIygUO2TPYJHj5dpGAcNZ282uT0r6mAlOcwElBi0Sk-4G6acNbnM6Mr9bCpY3wJ_CioTRWJkV2Hf1i3fxQ-_F4X50-Nld_JIV_Vl0H5zBb')" }}></div>
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                                    <div className="absolute bottom-8 left-8 right-8 p-6 rounded-2xl glass-nav border border-black/5 flex items-center justify-between">
-                                        <div className="flex flex-col">
-                                            <span className="text-[11px] uppercase font-bold tracking-[0.2em] text-gray-500">StyleLens Analysis</span>
-                                            <span className="font-bold text-lg">Sophisticated Urban Elite</span>
-                                        </div>
-                                        <div className="flex gap-3">
-                                            <div className="w-12 h-12 rounded-full border-2 border-white bg-primary flex items-center justify-center text-xs font-bold text-white shadow-lg">98%</div>
-                                            <div className="w-12 h-12 rounded-full border-2 border-white bg-black flex items-center justify-center text-xs font-bold text-white shadow-lg">A+</div>
-                                        </div>
+                        {/* Right Content (Vertical Image) - Span 5 */}
+                        <div className="lg:col-span-5 relative">
+                            <div className="relative z-10 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-primary/20 border-[8px] border-white rotate-2 hover:rotate-0 transition-transform duration-500 ease-out">
+                                <img
+                                    src="/hero_unsp.jpg"
+                                    alt="Fashion Model"
+                                    className="w-full h-auto object-cover aspect-[3/4]"
+                                />
+
+                                {/* Floating Badge */}
+                                <div className="absolute bottom-6 left-6 right-6 p-4 rounded-xl glass-nav border border-white/40 backdrop-blur-md shadow-lg flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center font-bold text-xs">A+</div>
+                                    <div>
+                                        <div className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Match Score</div>
+                                        <div className="font-bold text-sm text-slate-800">Sophisticated Chic</div>
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Decorative Elements */}
+                            <div className="absolute -top-10 -right-10 w-32 h-32 bg-yellow-300 rounded-full blur-3xl opacity-50 mix-blend-multiply"></div>
+                            <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-primary rounded-full blur-3xl opacity-30 mix-blend-multiply"></div>
                         </div>
                     </div>
                 </section>
 
+                {/* Testimonials Section (Infinite Marquee) */}
+                <section className="py-24 bg-white border-y border-black/5 overflow-hidden" id="testimonials">
+                    <div className="text-center mb-16 px-6">
+                        <p className="text-primary font-bold tracking-[0.2em] uppercase text-xs mb-4">Success Stories</p>
+                        <h2 className="hero-title text-4xl font-bold">User Transformations</h2>
+                    </div>
 
+                    <div className="relative w-full">
+                        {/* Gradient Masks for smooth fade edges */}
+                        <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
+                        <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
+
+                        <div className="flex animate-marquee gap-8 px-8 w-max hover:pause">
+                            {[
+                                { name: "Sarah J.", style: "Modern Minimalist", text: "StyleLens completely redefined how I see my wardrobe. The AI analysis was scary accurate!", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBYRiO9vXKQbAPaOT7qzXT28TMjlq2IKKJfPhmjCy2PkM5WPZURbHHTsXNpzc3AIQQ07WCsB6S5oysiIUuV7YCUIlloauA389ATNrKDnBgPR3V0WSELxYOEk1tibqKrxAbPmdS0s5EHsuei1BzXUjnP6crsGVWOIvpOGZixZQiDcevbbzp4glOCwShdIE0GDUJFmWriRf_IPspL6TTBKS08Dww8p2o6Mik27ZyYwaxLR1lb2Mi_9kuGqZ6yYj92z7tLq3LqecnQsXtm" },
+                                { name: "Elena M.", style: "Romantic Chic", text: "I finally found my signature style. The curated recommendations felt like I had a professional stylist.", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuB9efuBzfpeA4Ant7czlnueUWsUSVC6U06dYS_LWx2CEUbUwaIc-QNleSeDvJ36Yw00qWRsRfSyJ8bfV_3fVGDRLS084-ab6sMx35EiHQXJ1IfDbBej2SAmSpNFRBWkpScfc0p2uHGL_h9g5so4pgKbvm-TdGxCDDmbkBe87kwlg0TlWlq-gAEfsX0yUgPd9DrhswlBwCAUmWZryoX_SKheIJ45Ax5FOFP3pcg1ePVXUUHui_1qS7xBbkYLDbsZuVqNSwigSTMkITDx" },
+                                { name: "Chloe W.", style: "Urban Edge", text: "The grooming guide alone is worth it. It suggested a haircut I never would have tried!", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuAkNz8DVqMbn2DJEHiMAexJgRfkJbSOV-kSyO-Vh8lTQ8ndW8XMpb2J1IFhJ9UuVnRn9Fq7hKap_lLVt6Caw3jZEwmD5jW4zdWNmjSjD0uWUxJmBreZWrAmKvvqALkaWmbnlbE8azAgpVnMOcJ1zg4k-GkuhosHVnSTojVryx9jtS3Oa74JQ4OYSodgXvhv_ZjF6e6CewSgb3Stx93OxvkaWKBiU1EgQAarwMar5T-qD8IIiIw6T8R2pDr1JZ7ix2bifZwv6nDBY4hk" },
+                                { name: "Michael R.", style: "Dandy Classic", text: "Perfect for optimizing my business casual look. Saved me hours of shopping time.", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?fit=crop&w=200&h=200" },
+                                { name: "Jessica L.", style: "Soft Natural", text: "I love how it respects my messy hair preference but makes it look intentional.", img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?fit=crop&w=200&h=200" },
+                                { name: "David K.", style: "Street Tech", text: "The color analysis was a game changer. I stopped buying clothes that wash me out.", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?fit=crop&w=200&h=200" },
+                                // Duplicate for Loop
+                                { name: "Sarah J.", style: "Modern Minimalist", text: "StyleLens completely redefined how I see my wardrobe. The AI analysis was scary accurate!", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBYRiO9vXKQbAPaOT7qzXT28TMjlq2IKKJfPhmjCy2PkM5WPZURbHHTsXNpzc3AIQQ07WCsB6S5oysiIUuV7YCUIlloauA389ATNrKDnBgPR3V0WSELxYOEk1tibqKrxAbPmdS0s5EHsuei1BzXUjnP6crsGVWOIvpOGZixZQiDcevbbzp4glOCwShdIE0GDUJFmWriRf_IPspL6TTBKS08Dww8p2o6Mik27ZyYwaxLR1lb2Mi_9kuGqZ6yYj92z7tLq3LqecnQsXtm" },
+                                { name: "Elena M.", style: "Romantic Chic", text: "I finally found my signature style. The curated recommendations felt like I had a professional stylist.", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuB9efuBzfpeA4Ant7czlnueUWsUSVC6U06dYS_LWx2CEUbUwaIc-QNleSeDvJ36Yw00qWRsRfSyJ8bfV_3fVGDRLS084-ab6sMx35EiHQXJ1IfDbBej2SAmSpNFRBWkpScfc0p2uHGL_h9g5so4pgKbvm-TdGxCDDmbkBe87kwlg0TlWlq-gAEfsX0yUgPd9DrhswlBwCAUmWZryoX_SKheIJ45Ax5FOFP3pcg1ePVXUUHui_1qS7xBbkYLDbsZuVqNSwigSTMkITDx" },
+                                { name: "Chloe W.", style: "Urban Edge", text: "The grooming guide alone is worth it. It suggested a haircut I never would have tried!", img: "https://lh3.googleusercontent.com/aida-public/AB6AXuAkNz8DVqMbn2DJEHiMAexJgRfkJbSOV-kSyO-Vh8lTQ8ndW8XMpb2J1IFhJ9UuVnRn9Fq7hKap_lLVt6Caw3jZEwmD5jW4zdWNmjSjD0uWUxJmBreZWrAmKvvqALkaWmbnlbE8azAgpVnMOcJ1zg4k-GkuhosHVnSTojVryx9jtS3Oa74JQ4OYSodgXvhv_ZjF6e6CewSgb3Stx93OxvkaWKBiU1EgQAarwMar5T-qD8IIiIw6T8R2pDr1JZ7ix2bifZwv6nDBY4hk" },
+                                { name: "Michael R.", style: "Dandy Classic", text: "Perfect for optimizing my business casual look. Saved me hours of shopping time.", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?fit=crop&w=200&h=200" },
+                                { name: "Jessica L.", style: "Soft Natural", text: "I love how it respects my messy hair preference but makes it look intentional.", img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?fit=crop&w=200&h=200" },
+                                { name: "David K.", style: "Street Tech", text: "The color analysis was a game changer. I stopped buying clothes that wash me out.", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?fit=crop&w=200&h=200" },
+                            ].map((user, idx) => (
+                                <div key={idx} className="flex flex-col gap-6 p-8 rounded-3xl bg-gray-50 border border-black/5 min-w-[320px] max-w-[320px]">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary/20 shrink-0">
+                                            <img alt={user.name} className="w-full h-full object-cover" src={user.img} />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-lg leading-tight">{user.name}</h4>
+                                            <p className="text-sm text-gray-500">{user.style}</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-gray-600 italic leading-relaxed line-clamp-4">"{user.text}"</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
 
                 {/* How It Works Section */}
                 <section className="px-6 lg:px-20 py-32" id="how-it-works">
@@ -89,7 +158,7 @@ export default function LandingPage() {
                 </section>
 
                 {/* CTA Section */}
-                <section className="px-6 lg:px-20 py-32 text-center relative overflow-hidden bg-gray-50">
+                <section className="px-6 lg:px-20 py-32 text-center relative overflow-hidden bg-gray-50" id="start">
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
                     <div className="max-w-4xl mx-auto relative z-10">
                         <h2 className="hero-title text-5xl lg:text-7xl font-bold mb-10">Ready to Elevate <br />Your Aesthetic?</h2>

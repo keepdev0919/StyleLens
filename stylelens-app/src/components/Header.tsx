@@ -50,22 +50,26 @@ export default function Header({ variant = 'landing', userImageUrl, onDownload }
         <header className="fixed top-0 z-50 w-full glass-nav border-b border-black/5 px-6 lg:px-20 py-4">
             <div className="max-w-[1280px] mx-auto flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <Link to="/" className="logo-text text-2xl tracking-tight cursor-pointer hover:opacity-80 transition-opacity flex items-center">
+                    <Link
+                        to="/"
+                        className="logo-text text-2xl tracking-tight cursor-pointer hover:opacity-80 transition-opacity flex items-center"
+                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    >
                         <span className="font-extrabold text-black">Style</span>
                         <span className="font-normal text-primary">Lens</span>
                     </Link>
                 </div>
                 <nav className="hidden md:flex items-center gap-10">
+                    <a className="text-sm font-semibold hover:text-primary transition-colors" href="#testimonials">Reviews</a>
                     <a className="text-sm font-semibold hover:text-primary transition-colors" href="#how-it-works">How it Works</a>
-                    <a className="text-sm font-semibold hover:text-primary transition-colors" href="#features">Features</a>
-                    <a className="text-sm font-semibold hover:text-primary transition-colors" href="#pricing">Pricing</a>
-                    <a className="text-sm font-semibold hover:text-primary transition-colors" href="#about">About</a>
+                    <a className="text-sm font-semibold hover:text-primary transition-colors" href="#start">Get Started</a>
                 </nav>
                 <div className="flex items-center gap-4">
-                    <button className="hidden sm:block text-sm font-bold px-4 py-2 hover:text-primary transition-colors">Login</button>
-                    <button className="bg-primary hover:opacity-90 text-white text-sm font-bold px-8 py-3 rounded-full transition-all shadow-lg shadow-primary/20">
-                        Start Your Style Journey
-                    </button>
+                    <Link to="/input">
+                        <button className="bg-primary hover:opacity-90 text-white text-sm font-bold px-8 py-3 rounded-full transition-all shadow-lg shadow-primary/20">
+                            Start Your Style Journey
+                        </button>
+                    </Link>
                 </div>
             </div>
         </header>

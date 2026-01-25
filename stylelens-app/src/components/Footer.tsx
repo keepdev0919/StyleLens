@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 interface FooterProps {
     variant?: 'landing' | 'result';
 }
@@ -14,9 +16,9 @@ export default function Footer({ variant = 'landing' }: FooterProps) {
                         <h2 className="text-lg font-bold tracking-tight text-slate-600">StyleLens © 2024</h2>
                     </div>
                     <div className="flex gap-12">
-                        <a className="text-sm font-medium text-slate-400 hover:text-primary transition-colors" href="#">Ethics Policy</a>
-                        <a className="text-sm font-medium text-slate-400 hover:text-primary transition-colors" href="#">Usage Terms</a>
-                        <a className="text-sm font-medium text-slate-400 hover:text-primary transition-colors" href="#">Support Desk</a>
+                        <Link className="text-sm font-medium text-slate-400 hover:text-primary transition-colors" to="/privacy">Privacy Policy</Link>
+                        <Link className="text-sm font-medium text-slate-400 hover:text-primary transition-colors" to="/terms">Terms of Service</Link>
+                        <Link className="text-sm font-medium text-slate-400 hover:text-primary transition-colors" to="/refund">Refund Policy</Link>
                     </div>
                 </div>
             </footer>
@@ -33,11 +35,11 @@ export default function Footer({ variant = 'landing' }: FooterProps) {
                     </div>
                 </div>
                 <div className="flex gap-10 text-sm font-bold text-gray-500">
-                    <a className="hover:text-primary transition-colors" href="#">Privacy Policy</a>
-                    <a className="hover:text-primary transition-colors" href="#">Terms of Service</a>
-                    <a className="hover:text-primary transition-colors" href="#">Contact</a>
+                    <Link className="hover:text-primary transition-colors" to="/privacy">Privacy Policy</Link>
+                    <Link className="hover:text-primary transition-colors" to="/terms">Terms of Service</Link>
+                    <Link className="hover:text-primary transition-colors" to="/refund">Refund Policy</Link>
                 </div>
-                <p className="text-sm font-medium text-gray-400">© 2024 StyleLens. All rights reserved.</p>
+                <p className="text-sm font-medium text-gray-400">© 2026 StyleLens. All rights reserved.</p>
             </div>
         </footer>
     );

@@ -3,6 +3,8 @@ import { Polar } from "@polar-sh/sdk";
 
 interface Env {
     POLAR_ACCESS_TOKEN: string;
+    POLAR_SERVER?: "sandbox" | "production";
+    POLAR_PRODUCT_ID: string;
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
@@ -19,7 +21,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
         const polar = new Polar({
             accessToken: token,
-            server: "production", // Default to sandbox for dev, change to production based on env if needed
+            server: env.POLAR_SERVER || "production",
         });
 
         const { successUrl } = await request.json() as { successUrl?: string };
@@ -28,8 +30,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         const origin = request.headers.get("Origin") || "http://localhost:5173";
         const finalSuccessUrl = successUrl || `${origin}/input?payment=success`;
 
+        const productId = env.POLAR_PRODUCT_ID;
+        if (!productId) {
+            return new Response(JSON.stringify({ error: "Missing POLAR_PRODUCT_ID" }), {
+                status: 500,
+                headers: { "Content-Type": "application/json" },
+            });
+        }
+
         const result = await polar.checkouts.create({
-            products: ["e1403b39-214e-427d-863c-0dbea81cc9d9"],
+            products: [productId],
             successUrl: finalSuccessUrl,
         });
 

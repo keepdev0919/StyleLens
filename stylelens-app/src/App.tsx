@@ -2,6 +2,9 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import InputPage from './pages/InputPage';
 import ResultPage from './pages/ResultPage';
+import TermsPage from './pages/TermsPage';
+import RefundPage from './pages/RefundPage';
+import PrivacyPage from './pages/PrivacyPage';
 
 function App() {
   return (
@@ -10,6 +13,9 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/input" element={<InputPage />} />
         <Route path="/result" element={<ResultPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/refund" element={<RefundPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
       </Routes>
     </BrowserRouter>
   );
