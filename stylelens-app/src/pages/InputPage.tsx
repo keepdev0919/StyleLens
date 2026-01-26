@@ -17,7 +17,7 @@ export default function InputPage() {
     const [searchParams] = useSearchParams();
     const hasEffectRun = useRef(false);
 
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading] = useState(false);
 
     // Restore state and trigger analysis if returning from successful payment
     useEffect(() => {
