@@ -1,0 +1,31 @@
+The `llms.txt` file provides a plain text overview of all Replicate documentation, formatted for consumption by Large Language Models.
+
+The file is available at: [https://replicate.com/docs/llms.txt](/docs/llms.txt)
+
+[](#example)Example
+-------------------
+
+```markdown
+# Replicate
+## Get Started
+- [Run a model from Node.js](https://replicate.com/docs/get-started/nodejs): Get started with a few lines of JavaScript.
+- [Run a model from Python](https://replicate.com/docs/get-started/python): The language of the machine learning world.
+## Topics
+- [Models](https://replicate.com/docs/topics/models/index): A model is a trained, packaged, and published software program that accepts inputs and returns outputs.
+- [Predictions](https://replicate.com/docs/topics/predictions/index): Whenever you run a model, you're creating a prediction.
+...
+```
+
+[](#use-cases)Use Cases
+-----------------------
+
+*   Training or fine-tuning language models on Replicate’s documentation
+*   Building chatbots or AI assistants that answer questions about Replicate
+*   Indexing documentation for semantic search
+*   Creating documentation embeddings
+
+[](#related)Related
+-------------------
+
+*   [HTTP API](/docs/reference/http) - The full API reference
+*   [OpenAPI schema](/docs/reference/openapi) - Machine-readable API schema

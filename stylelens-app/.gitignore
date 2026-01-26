@@ -26,6 +26,5 @@ dist-ssr
 # Wrangler
 .wrangler
 
-# Dev vars
+# Dev vars (contains API keys - NEVER commit)
 .dev.vars
-
