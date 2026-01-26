@@ -52,11 +52,10 @@ export default function Header({ variant = 'landing', userImageUrl, onDownload }
                 <div className="flex items-center gap-2">
                     <Link
                         to="/"
-                        className="logo-text text-2xl tracking-tight cursor-pointer hover:opacity-80 transition-opacity flex items-center"
+                        className="text-xl font-bold tracking-tighter uppercase font-serif italic cursor-pointer hover:opacity-80 transition-opacity"
                         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                     >
-                        <span className="font-extrabold text-black">Style</span>
-                        <span className="font-normal text-primary">Lens</span>
+                        Style<span className="text-primary">Lens</span>
                     </Link>
                 </div>
                 <nav className="hidden md:flex items-center gap-10">

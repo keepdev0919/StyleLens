@@ -173,10 +173,11 @@ export default function ResultPage() {
                         <h2 className="text-xl font-bold tracking-tighter uppercase font-serif italic">Style<span className="text-primary">Lens</span></h2>
                     </div>
                     <nav className="hidden md:flex items-center gap-10">
-                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#">Identity</a>
-                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#">Lookbook</a>
-                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#">Shopping</a>
-                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#">Consultant</a>
+                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#identity">Identity</a>
+                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#lookbook">Lookbook</a>
+                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#hair">Hair</a>
+                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#shopping">Shopping</a>
+                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#colors">Colors</a>
                     </nav>
                     <button className="px-6 py-2 border border-zinc-200 rounded-full text-[11px] font-bold uppercase tracking-widest hover:border-primary hover:text-primary transition-all">
                         Share Report
@@ -186,7 +187,7 @@ export default function ResultPage() {
 
             <main className="max-w-[1280px] mx-auto px-8 py-12">
                 {/* HERO SECTION */}
-                <section className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center mb-24">
+                <section id="identity" className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center mb-24 scroll-mt-24">
                     <div className="lg:col-span-7">
                         <div className="flex items-center gap-4 mb-6">
                             <span className="inline-block px-4 py-1.5 badge-gradient text-white text-[10px] font-bold uppercase tracking-[0.2em] rounded-full">Top 3% Rare Identity</span>
@@ -272,7 +273,7 @@ export default function ResultPage() {
                 </section>
 
                 {/* LOOKBOOK SECTION */}
-                <section className="mb-24">
+                <section id="lookbook" className="mb-24 scroll-mt-24">
                     <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
                         <div>
                             <h2 className="text-4xl font-bold font-serif mb-2">Identity Lookbook</h2>
@@ -312,7 +313,7 @@ export default function ResultPage() {
                 </section>
 
                 {/* PREMIUM HAIR STUDIO SECTION */}
-                <section className="mb-32">
+                <section id="hair" className="mb-32 scroll-mt-24">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-20 items-center">
                         {/* Left: AI Generation Grid */}
                         <div className="lg:col-span-6 order-2 lg:order-1">
@@ -358,7 +359,7 @@ export default function ResultPage() {
                 </section>
 
                 {/* SHOPPING BOUTIQUE SECTION */}
-                <section className="mb-24 bg-accent-pink/30 rounded-[2rem] p-12 md:p-20 border border-pink-100">
+                <section id="shopping" className="mb-24 bg-accent-pink/30 rounded-[2rem] p-12 md:p-20 border border-pink-100 scroll-mt-24">
                     <div className="text-center mb-16">
                         <h2 className="text-4xl font-bold font-serif mb-4">Must-Have Now</h2>
                         <p className="text-zinc-500 uppercase text-[11px] font-bold tracking-[0.3em]">The Boutique-Curated Essentials</p>
@@ -371,7 +372,7 @@ export default function ResultPage() {
                 </section>
 
                 {/* COLOR STORY SECTION */}
-                <section className="mb-24">
+                <section id="colors" className="mb-24 scroll-mt-24">
                     <div className="text-center mb-12">
                         <h2 className="text-4xl font-bold font-serif mb-4">
                             {hero_section?.attributes?.season || "Your"} <span className="text-primary italic">Color Story</span>
