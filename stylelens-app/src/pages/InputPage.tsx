@@ -126,8 +126,35 @@ export default function InputPage() {
             return;
         }
 
-        // Direct navigation without payment as per user request
-        performAnalysisWithData(formData, photoPreview);
+        // Save form data for after payment redirect
+        sessionStorage.setItem('pending_style_analysis', JSON.stringify({
+            formData,
+            photoPreview
+        }));
+
+        try {
+            // Create Polar checkout session
+            const res = await fetch('/api/create-checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    successUrl: `${window.location.origin}/input?payment=success`
+                })
+            });
+
+            const data = await res.json();
+
+            if (data.url) {
+                // Redirect to Polar checkout
+                window.location.href = data.url;
+            } else {
+                throw new Error(data.error || 'Failed to create checkout');
+            }
+        } catch (error) {
+            console.error('Checkout error:', error);
+            alert('Failed to start checkout. Please try again.');
+            sessionStorage.removeItem('pending_style_analysis');
+        }
     };
 
     return (
