@@ -476,9 +476,11 @@ export default function ResultPage() {
                             </div>
 
                             <div className="flex flex-wrap gap-3 mt-10">
-                                <span className="px-5 py-2.5 bg-white border border-pink-100 rounded-full text-xs font-bold uppercase text-primary magazine-shadow">#FaceFraming</span>
-                                <span className="px-5 py-2.5 bg-white border border-pink-100 rounded-full text-xs font-bold uppercase text-primary magazine-shadow">#StyleBalance</span>
-                                <span className="px-5 py-2.5 bg-white border border-pink-100 rounded-full text-xs font-bold uppercase text-primary magazine-shadow">#VisualVolume</span>
+                                {(hair_section?.tags || ['FaceFraming', 'StyleBalance', 'VisualVolume']).map((tag: string, idx: number) => (
+                                    <span key={idx} className="px-5 py-2.5 bg-white border border-pink-100 rounded-full text-xs font-bold uppercase text-primary magazine-shadow">
+                                        #{tag.replace(/^#/, '')}
+                                    </span>
+                                ))}
                             </div>
                         </div>
                     </div>

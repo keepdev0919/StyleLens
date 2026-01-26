@@ -71,7 +71,8 @@ Output MUST be a valid JSON object with the following schema:
   ],
   "hair_section": {
     "face_shape": "One of: Oval, Round, Square, Heart, Oblong, Diamond, Triangle",
-    "advice": "Professional advice on the hairstyle"
+    "advice": "Professional advice on the hairstyle",
+    "tags": ["Keyword1", "Keyword2", "Keyword3"]
   },
   "shopping_section": [
     {
