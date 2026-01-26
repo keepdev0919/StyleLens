@@ -35,44 +35,74 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         }
 
         const systemPrompt = `
-You are a helpful and positive fashion stylist assistant.
-Your goal is to suggest fashion styles, color palettes, and grooming tips based on the visual attributes in the photo.
-Focus on clothing, general style vibes (e.g., casual, formal), and color theory.
+You are a high-end fashion director for a luxury magazine.
+Your goal is to analyze the user's photo and physical attributes to create a personalized "Style Vibes" report.
 
-IMPORTANT: Do not perform any medical, biometric, or sensitive physical analysis. Do not make negative comments.
-Simply provide style recommendations in the requested JSON format.
-
-JSON Schema:
+Output MUST be a valid JSON object with the following schema:
 {
+  "vibe_title": "string (e.g., Romantic Urban Chic, Soft Office Siren)",
+  "vibe_description": "string (2 sentences describing the style vibe in a sophisticated, magazine-editorial tone)",
+  "verdict_quote": "string (A punchy, one-sentence fashion verdict)",
+  "attributes": {
+    "base": "string (e.g., Silk & Wool, Denim & Leather)",
+    "energy": "string (e.g., Sophisticated, Playful, Edgy)",
+    "season": "string (e.g., Summer Mute, Deep Autumn)"
+  },
+  "body_analysis": {
+    "type": "string (e.g., Hourglass, Rectangle)",
+    "description": "string (1 sentence explaining why)",
+    "rec_silhouette": "string (e.g., High-waist wide pants)",
+    "rec_silhouette_desc": "string (Why this silhouette works)"
+  },
   "palette": {
-    "season": "string (e.g., Cool Summer, Deep Autumn)",
-    "description": "string (1-2 sentences explaining why this fits)",
+    "season": "string (Same as attributes.season)",
+    "description": "string (Color analysis description)",
     "colors": [
-      { "name": "string (e.g., Imperial Navy)", "hex": "string (e.g., #0F172A)" } // Provide 8 colors
-    ]
+        { "hex": "string (Hex Code)", "name": "string (Color Name, e.g. Midnight Blue)" },
+        { "hex": "string (Hex Code)", "name": "string (Color Name)" },
+        { "hex": "string (Hex Code)", "name": "string (Color Name)" },
+        { "hex": "string (Hex Code)", "name": "string (Color Name)" },
+        { "hex": "string (Hex Code)", "name": "string (Color Name)" }
+    ] 
   },
-  "outfits": [
-    {
-      "title": "string (e.g., Modern Executive)",
-      "description": "string (1 sentence)",
-      "styleTag": "string (e.g., Business Edge)"
-    },
-    // Generate 2 outfits
-  ],
   "grooming": {
-    "faceShape": "string (e.g., Diamond, Oval - estimated for hairstyle advice)",
-    "refinementLevel": "string (e.g., Polished)",
-    "tips": [
-      { "title": "string", "description": "string" },
-      { "title": "string", "description": "string" }
-    ]
+    "makeup_lip": "string (e.g., Ashy Lavender)",
+    "makeup_desc": "string (Description of the makeup look)"
   },
-  "bodyAnalysis": {
-    "upperBodyRatio": { "label": "string", "score": number (0-100) },
-    "stanceSymmetry": { "label": "string", "score": number (0-100) },
-    "colorAdaptability": { "label": "string", "score": number (0-100) },
-    "comment": "string (positive comment about style potential)"
-  }
+  "hair_analysis": {
+    "face_shape": "string (e.g. Oval, Square, Heart)",
+    "advice": "string (Professional advice on why this cut works)",
+    "dalle_prompt": "string (DALL-E prompt for: A photorealistic 3x3 grid hair catalog featuring 9 variations of [Recommended Style]. High-end salon photography, studio lighting. The model has [User's Ethnicity/Features].)"
+  },
+  "lookbook": [
+    {
+      "title": "string (Concept Title, e.g., The Executive)",
+      "description": "string (Description of the outfit)",
+      "search_term": "string (DALL-E prompt to generate this model's look)"
+    },
+    {
+      "title": "string",
+      "description": "string",
+      "search_term": "string"
+    },
+    {
+      "title": "string",
+      "description": "string",
+      "search_term": "string"
+    }
+  ],
+  "shopping_keywords": [
+    {
+        "category": "string (e.g. Tailoring)",
+        "name": "string (e.g. Oversized Blazer)",
+        "description": "string (Why this item)",
+        "price": "string (Estimated price, e.g. $249)",
+        "query": "string (Search query for Bing, e.g. Charcoal Oversized Wool Blazer women fashion product)" 
+    },
+    { "category": "string", "name": "string", "description": "string", "price": "string", "query": "string" },
+    { "category": "string", "name": "string", "description": "string", "price": "string", "query": "string" },
+    { "category": "string", "name": "string", "description": "string", "price": "string", "query": "string" }
+  ]
 }
 `;
 
@@ -89,7 +119,7 @@ JSON Schema:
                     {
                         role: "user",
                         content: [
-                            { type: "text", text: `Height: ${data.height}cm, Weight: ${data.weight}kg. Analyze this user.` },
+                            { type: "text", text: `Height: ${data.height}cm, Weight: ${data.weight}kg. Create a luxury fashion analysis for this user.` },
                             { type: "image_url", image_url: { url: data.photo } },
                         ],
                     },
@@ -99,8 +129,6 @@ JSON Schema:
         });
 
         const openaiData = await response.json() as any;
-        console.log("DEBUG: OpenAI Raw Status:", response.status);
-        console.log("DEBUG: OpenAI Raw Data:", JSON.stringify(openaiData, null, 2));
 
         if (openaiData.error) {
             console.error("OpenAI Error:", openaiData.error);
@@ -108,18 +136,9 @@ JSON Schema:
         }
 
         const content = openaiData.choices?.[0]?.message?.content;
-        console.log("DEBUG: Extracted Content:", content);
-
-        if (!content) {
-            throw new Error("OpenAI returned empty content. Partial data: " + JSON.stringify(openaiData));
-        }
+        if (!content) throw new Error("No content from OpenAI");
 
         const analysisResult = JSON.parse(content);
-
-        if (!analysisResult || typeof analysisResult !== 'object') {
-            console.error("Invalid AI response:", openaiData.choices[0].message.content);
-            throw new Error("Failed to generate valid analysis");
-        }
 
         // --- Image Generation Logic (DALL-E 3) ---
         const generateImage = async (prompt: string): Promise<string | null> => {
@@ -132,47 +151,34 @@ JSON Schema:
                     },
                     body: JSON.stringify({
                         model: "dall-e-3",
-                        prompt: prompt,
+                        prompt: `Professional high-end fashion photography. ${prompt} 8k resolution, magazine quality.`,
                         n: 1,
                         size: "1024x1024",
                         quality: "standard",
                     }),
                 });
                 const imgData = await imgResponse.json() as any;
-                if (!imgResponse.ok) {
-                    console.error("DALL-E Error:", imgData);
-                    return null;
-                }
+                if (!imgResponse.ok) return null;
                 return imgData.data?.[0]?.url || null;
             } catch (e) {
-                console.error("Image gen failed:", e);
                 return null;
             }
         };
 
-        // Construct Prompts (Lookalike approach)
-        // We assume the user is male based on context for MVP.
-        const season = analysisResult.palette?.season || "Unknown";
-        const faceShape = analysisResult.grooming?.faceShape || "Unknown";
-        const userLook = `${faceShape} face shape, ${season} color season, male fashion model`;
+        // Generate images: 3 Lookbook concepts + 1 Hair Grid
+        const lookbookPromises = analysisResult.lookbook.map((look: any) => generateImage(look.search_term));
+        const hairPromise = generateImage(analysisResult.hair_analysis.dalle_prompt);
 
-        const imagePromises = [
-            // Outfit 1
-            generateImage(`Full body fashion shot of a model with ${userLook} wearing ${analysisResult.outfits?.[0]?.title || 'Stylish Outfit'}: ${analysisResult.outfits?.[0]?.description || ''}. High-end commercial photography, studio lighting.`),
-            // Outfit 2
-            generateImage(`Full body fashion shot of a model with ${userLook} wearing ${analysisResult.outfits?.[1]?.title || 'Stylish Outfit'}: ${analysisResult.outfits?.[1]?.description || ''}. Street style photography, natural lighting.`),
-            // Grooming 1 (Hairstyle)
-            generateImage(`Close-up portrait of a model with ${userLook} featuring hairstyle: ${analysisResult.grooming?.tips?.[0]?.title || 'Hairstyle'}. High-end beauty photography, sharp focus on hair.`),
-            // Grooming 2 (Hairstyle/Skincare)
-            generateImage(`Close-up portrait of a model with ${userLook} featuring style: ${analysisResult.grooming?.tips?.[1]?.title || 'Style'}. High-end beauty photography.`),
-        ];
+        const [generatedImages, hairImage] = await Promise.all([
+            Promise.all(lookbookPromises),
+            hairPromise
+        ]);
 
-        const [outfit1Url, outfit2Url, tip1Url, tip2Url] = await Promise.all(imagePromises);
-
-        if (analysisResult.outfits?.[0]) analysisResult.outfits[0].imageUrl = outfit1Url;
-        if (analysisResult.outfits?.[1]) analysisResult.outfits[1].imageUrl = outfit2Url;
-        if (analysisResult.grooming?.tips?.[0]) analysisResult.grooming.tips[0].imageUrl = tip1Url;
-        if (analysisResult.grooming?.tips?.[1]) analysisResult.grooming.tips[1].imageUrl = tip2Url;
+        // Assign images back to result
+        analysisResult.lookbook.forEach((look: any, index: number) => {
+            look.imageUrl = generatedImages[index];
+        });
+        analysisResult.hair_analysis.imageUrl = hairImage;
 
         return new Response(JSON.stringify(analysisResult), {
             headers: {

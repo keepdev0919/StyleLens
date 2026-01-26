@@ -10,10 +10,8 @@ export default function Footer({ variant = 'landing' }: FooterProps) {
             <footer className="mt-24 border-t border-pink-50 py-16 px-6 bg-slate-50">
                 <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
                     <div className="flex items-center gap-2 grayscale opacity-60">
-                        <div className="bg-slate-400/20 p-1.5 rounded-lg">
-                            <span className="material-symbols-outlined text-slate-600 text-xl block">flare</span>
-                        </div>
-                        <h2 className="text-lg font-bold tracking-tight text-slate-600">StyleLens © 2024</h2>
+
+                        <h2 className="text-lg font-bold tracking-tight text-slate-600">StyleLens © 2026</h2>
                     </div>
                     <div className="flex gap-12">
                         <Link className="text-sm font-medium text-slate-400 hover:text-primary transition-colors" to="/privacy">Privacy Policy</Link>

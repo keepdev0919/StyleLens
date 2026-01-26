@@ -13,6 +13,7 @@ export default {
         "background-light": "#ffffff",
         "text-main": "#000000",
         "border-pink": "#ffdef2",
+        "magazine-black": "#1a1a1a",
       },
       fontFamily: {
         "sans": ["Plus Jakarta Sans", "sans-serif"],

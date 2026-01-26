@@ -47,50 +47,72 @@ export default function InputPage() {
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Validate basic type availability or just try to convert everything
+            // Note: iOS/Mac HEIC might be 'image/heic' or ''
+
             setFormData({ ...formData, photo: file });
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setPhotoPreview(reader.result as string);
+
+            // Use Canvas to normalize to JPEG
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                // Limit max dimension to avoid huge payloads (OpenAI has limits/costs)
+                const MAX_DIM = 1024;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_DIM) {
+                        height = height * (MAX_DIM / width);
+                        width = MAX_DIM;
+                    }
+                } else {
+                    if (height > MAX_DIM) {
+                        width = width * (MAX_DIM / height);
+                        height = MAX_DIM;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0, width, height);
+                    // Force JPEG format
+                    const jpegBase64 = canvas.toDataURL('image/jpeg', 0.8);
+                    setPhotoPreview(jpegBase64);
+                }
+                URL.revokeObjectURL(url);
             };
-            reader.readAsDataURL(file);
+
+            img.onerror = () => {
+                // Fallback to basic file reader if image loading fails (though unlikely for valid images)
+                // This might happen if browser doesn't support the format (e.g. old Chrome with HEIC)
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setPhotoPreview(reader.result as string);
+                };
+                reader.readAsDataURL(file);
+                URL.revokeObjectURL(url);
+            };
+
+            img.src = url;
         }
     };
 
     const performAnalysisWithData = async (data: typeof formData, preview: string) => {
-        setIsLoading(true);
-
-        try {
-            const response = await fetch('/api/analyze', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    photo: preview,
-                    height: data.height,
-                    weight: data.weight,
-                }),
-            });
-
-            if (!response.ok) {
-                const errData = await response.json() as any;
-                throw new Error(errData.error || 'Analysis failed');
+        // Navigate immediately to ResultPage to let it handle the analysis
+        // This ensures the user sees the "Designing Your Cover" loading screen
+        navigate('/result', {
+            state: {
+                userData: data,
+                userImage: preview, // Pass base64 image
+                height: data.height,
+                weight: data.weight
             }
-
-            const analysisResult = await response.json();
-
-            navigate('/result', {
-                state: {
-                    userData: data,
-                    analysisResult: analysisResult,
-                }
-            });
-
-        } catch (error) {
-            console.error(error);
-            alert("Failed to analyze style. Please try again.");
-            setIsLoading(false);
-        }
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -101,36 +123,8 @@ export default function InputPage() {
             return;
         }
 
-        setIsLoading(true);
-
-        try {
-            // 1. Save state to sessionStorage
-            sessionStorage.setItem('pending_style_analysis', JSON.stringify({
-                formData,
-                photoPreview
-            }));
-
-            // 2. Create Checkout Session
-            const res = await fetch('/api/create-checkout', {
-                method: 'POST',
-                body: JSON.stringify({
-                    successUrl: window.location.origin + '/input?payment=success'
-                }),
-                headers: { 'Content-Type': 'application/json' }
-            });
-
-            if (!res.ok) throw new Error('Failed to initialize payment');
-
-            const { url } = await res.json();
-
-            // 3. Redirect to Polar Hosted Checkout
-            window.location.href = url;
-
-        } catch (error) {
-            console.error("Payment Error:", error);
-            alert("Payment failed initialization.");
-            setIsLoading(false);
-        }
+        // Direct navigation without payment as per user request
+        performAnalysisWithData(formData, photoPreview);
     };
 
     return (
@@ -238,7 +232,7 @@ export default function InputPage() {
                             disabled={isLoading}
                             className="w-full bg-primary hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xl font-bold px-12 py-5 rounded-full transition-all shadow-xl shadow-primary/30"
                         >
-                            {isLoading ? 'Processing...' : 'Analyze My Style ($4.99)'}
+                            {isLoading ? 'Processing...' : 'Analyze My Style'}
                         </button>
                     </form>
                 </div>
