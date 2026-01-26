@@ -7,6 +7,8 @@ export default function InputPage() {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         photo: null as File | null,
+        gender: 'woman' as 'man' | 'woman' | 'other',
+        customGender: '',
         height: '',
         weight: '',
     });
@@ -110,7 +112,8 @@ export default function InputPage() {
                 userData: data,
                 userImage: preview, // Pass base64 image
                 height: data.height,
-                weight: data.weight
+                weight: data.weight,
+                gender: data.gender === 'other' ? data.customGender : data.gender
             }
         });
     };
@@ -190,6 +193,45 @@ export default function InputPage() {
                             <p className="text-sm text-gray-500 text-center mt-4">
                                 Upload a clear, front-facing photo for best results
                             </p>
+                        </div>
+
+                        {/* Gender Selection */}
+                        <div className="mb-10">
+                            <label className="block text-lg font-bold text-slate-900 mb-4">
+                                Gender / Identity
+                            </label>
+                            <div className="grid grid-cols-3 gap-4 mb-4">
+                                {[
+                                    { id: 'woman', label: 'Female' },
+                                    { id: 'man', label: 'Male' },
+                                    { id: 'other', label: 'Other' }
+                                ].map((opt) => (
+                                    <button
+                                        key={opt.id}
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, gender: opt.id as any })}
+                                        className={`py-4 rounded-xl font-bold transition-all border-2 ${formData.gender === opt.id
+                                            ? 'border-primary bg-accent-pink/20 text-primary shadow-lg shadow-primary/10'
+                                            : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-200'
+                                            }`}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {formData.gender === 'other' && (
+                                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                                    <input
+                                        type="text"
+                                        value={formData.customGender}
+                                        onChange={(e) => setFormData({ ...formData, customGender: e.target.value })}
+                                        placeholder="How would you like to be described? (e.g. Non-binary, Masculine woman)"
+                                        className="w-full px-6 py-4 rounded-xl border-2 border-primary focus:outline-none text-base font-medium transition-all"
+                                        required={formData.gender === 'other'}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         {/* Height Input */}

@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import Footer from '../components/Footer';
 
 // Intefaces
@@ -34,9 +36,10 @@ const ColorRoleCard = ({ color }: { color: PaletteColor }) => (
     </div>
 );
 
-// Shopping Item Card (Grid Style)
-// Shopping Item Card (Typography Style - No Bing API)
+// Shopping Item Card (Typography Style - with hover tooltip)
 const ShoppingItemCard = ({ item }: { item: ShoppingItem }) => {
+    const [showTooltip, setShowTooltip] = useState(false);
+
     return (
         <div className="bg-white p-6 rounded-2xl magazine-shadow group cursor-pointer border border-transparent hover:border-black transition-all flex flex-col justify-between h-full min-h-[380px] relative overflow-hidden">
             {/* Top: Category & Name */}
@@ -64,11 +67,23 @@ const ShoppingItemCard = ({ item }: { item: ShoppingItem }) => {
                 )}
             </div>
 
-            {/* Bottom: Description */}
-            <div className="border-t border-gray-100 pt-4 mt-2">
-                <p className="text-[11px] text-zinc-500 leading-relaxed line-clamp-2">
+            {/* Bottom: Description with hover tooltip */}
+            <div
+                className="border-t border-gray-100 pt-4 mt-2 relative"
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+            >
+                <p className="text-[11px] text-zinc-500 leading-relaxed line-clamp-2 cursor-help">
                     {item.description}
                 </p>
+
+                {/* Tooltip - shows full description on hover */}
+                {showTooltip && (
+                    <div className="absolute bottom-full left-0 right-0 mb-2 p-4 bg-zinc-900 text-white text-xs leading-relaxed rounded-xl shadow-xl z-50 animate-fade-in">
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-zinc-900"></div>
+                        {item.description}
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -80,8 +95,109 @@ export default function ResultPage() {
     const [analysis, setAnalysis] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
 
     const fetchCalled = useRef(false);
+
+    const mainRef = useRef<HTMLElement>(null);
+    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+    // PDF Download handler
+    const handleDownloadPDF = async () => {
+        if (!mainRef.current || isGeneratingPdf) return;
+
+        setIsGeneratingPdf(true);
+        setToastMessage('Generating PDF...');
+        setShowToast(true);
+
+        try {
+            const element = mainRef.current;
+            const canvas = await html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+            });
+
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4',
+            });
+
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const imgWidth = canvas.width;
+            const imgHeight = canvas.height;
+            const ratio = pdfWidth / imgWidth;
+            const imgScaledHeight = imgHeight * ratio;
+
+            // Calculate pages needed
+            const pageHeight = pdfHeight;
+            const totalPages = Math.ceil(imgScaledHeight / pageHeight);
+
+            for (let page = 0; page < totalPages; page++) {
+                if (page > 0) pdf.addPage();
+
+                const srcY = page * (imgHeight / totalPages);
+                const srcHeight = imgHeight / totalPages;
+
+                // Create a temporary canvas for this page section
+                const pageCanvas = document.createElement('canvas');
+                pageCanvas.width = imgWidth;
+                pageCanvas.height = srcHeight;
+                const ctx = pageCanvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(canvas, 0, srcY, imgWidth, srcHeight, 0, 0, imgWidth, srcHeight);
+                    const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.95);
+                    pdf.addImage(pageImgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                }
+            }
+
+            pdf.save(`StyleLens-Report-${new Date().toISOString().split('T')[0]}.pdf`);
+            setToastMessage('PDF downloaded successfully!');
+        } catch (err) {
+            console.error('PDF generation error:', err);
+            setToastMessage('Failed to generate PDF');
+        } finally {
+            setIsGeneratingPdf(false);
+            setTimeout(() => setShowToast(false), 3000);
+        }
+    };
+
+    // Share Report handler
+    const handleShare = async () => {
+        const shareData = {
+            title: 'My StyleLens Report',
+            text: 'Check out my personalized style analysis!',
+            url: window.location.href
+        };
+
+        try {
+            if (navigator.share && navigator.canShare(shareData)) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(window.location.href);
+                setToastMessage('Link copied to clipboard!');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
+            }
+        } catch (err) {
+            // User cancelled or error - fallback to clipboard
+            try {
+                await navigator.clipboard.writeText(window.location.href);
+                setToastMessage('Link copied to clipboard!');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
+            } catch {
+                setToastMessage('Failed to copy link');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
+            }
+        }
+    };
 
     useEffect(() => {
         if (fetchCalled.current) return;
@@ -179,13 +295,23 @@ export default function ResultPage() {
                         <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#shopping">Shopping</a>
                         <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#colors">Colors</a>
                     </nav>
-                    <button className="px-6 py-2 border border-zinc-200 rounded-full text-[11px] font-bold uppercase tracking-widest hover:border-primary hover:text-primary transition-all">
+                    <button
+                        onClick={handleShare}
+                        className="px-6 py-2 border border-zinc-200 rounded-full text-[11px] font-bold uppercase tracking-widest hover:border-primary hover:text-primary transition-all"
+                    >
                         Share Report
                     </button>
                 </div>
             </header>
 
-            <main className="max-w-[1280px] mx-auto px-8 py-12">
+            {/* Toast Notification */}
+            {showToast && (
+                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 px-6 py-3 bg-zinc-900 text-white rounded-full text-sm font-medium shadow-xl animate-fade-in">
+                    {toastMessage}
+                </div>
+            )}
+
+            <main ref={mainRef} className="max-w-[1280px] mx-auto px-8 py-12">
                 {/* HERO SECTION */}
                 <section id="identity" className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center mb-24 scroll-mt-24">
                     <div className="lg:col-span-7">
@@ -415,9 +541,13 @@ export default function ResultPage() {
                                 Ready to Own<br />
                                 <span className="text-primary italic">Your Identity?</span>
                             </h2>
-                            <button className="w-full lg:w-auto px-12 py-5 bg-white text-black text-xl font-bold rounded-full hover:bg-zinc-200 transition-all shadow-[0_0_40px_rgba(255,255,255,0.3)] flex items-center justify-center gap-3 active:scale-95">
-                                <span className="material-symbols-outlined">download</span>
-                                Download Style Book
+                            <button
+                                onClick={handleDownloadPDF}
+                                disabled={isGeneratingPdf}
+                                className="w-full lg:w-auto px-12 py-5 bg-white text-black text-xl font-bold rounded-full hover:bg-zinc-200 transition-all shadow-[0_0_40px_rgba(255,255,255,0.3)] flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <span className="material-symbols-outlined">{isGeneratingPdf ? 'hourglass_empty' : 'download'}</span>
+                                {isGeneratingPdf ? 'Generating...' : 'Download Style Book'}
                             </button>
                         </div>
 
