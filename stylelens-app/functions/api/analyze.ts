@@ -1,6 +1,8 @@
 
 interface Env {
     OPENAI_API_KEY: string;
+    PEXELS_API_KEY: string;
+    REPLICATE_API_TOKEN: string;
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
@@ -25,7 +27,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     try {
-        const data = await request.json() as { photo: string; height: string; weight: string };
+        const data = await request.json() as { photo: string; height: string; weight: string; gender: string };
 
         if (!data.photo) {
             return new Response(JSON.stringify({ error: "Missing photo data" }), {
@@ -37,72 +39,61 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         const systemPrompt = `
 You are a high-end fashion director for a luxury magazine.
 Your goal is to analyze the user's photo and physical attributes to create a personalized "Style Vibes" report.
+The user identifies as ${data.gender || 'not specified'}. Provide professional advice tailored to this identity.
 
 Output MUST be a valid JSON object with the following schema:
 {
-  "vibe_title": "string (e.g., Romantic Urban Chic, Soft Office Siren)",
-  "vibe_description": "string (2 sentences describing the style vibe in a sophisticated, magazine-editorial tone)",
-  "verdict_quote": "string (A punchy, one-sentence fashion verdict)",
-  "attributes": {
-    "base": "string (e.g., Silk & Wool, Denim & Leather)",
-    "energy": "string (e.g., Sophisticated, Playful, Edgy)",
-    "season": "string (e.g., Summer Mute, Deep Autumn)"
-  },
-  "body_analysis": {
-    "type": "string (e.g., Hourglass, Rectangle)",
-    "description": "string (1 sentence explaining why)",
-    "rec_silhouette": "string (e.g., High-waist wide pants)",
-    "rec_silhouette_desc": "string (Why this silhouette works)"
-  },
-  "palette": {
-    "season": "string (Same as attributes.season)",
-    "description": "string (Color analysis description)",
-    "colors": [
-        { "hex": "string (Hex Code)", "name": "string (Color Name, e.g. Midnight Blue)" },
-        { "hex": "string (Hex Code)", "name": "string (Color Name)" },
-        { "hex": "string (Hex Code)", "name": "string (Color Name)" },
-        { "hex": "string (Hex Code)", "name": "string (Color Name)" },
-        { "hex": "string (Hex Code)", "name": "string (Color Name)" }
-    ] 
-  },
-  "grooming": {
-    "makeup_lip": "string (e.g., Ashy Lavender)",
-    "makeup_desc": "string (Description of the makeup look)"
-  },
-  "hair_analysis": {
-    "face_shape": "string (e.g. Oval, Square, Heart)",
-    "advice": "string (Professional advice on why this cut works)",
-    "dalle_prompt": "string (DALL-E prompt for: A photorealistic 3x3 grid hair catalog featuring 9 variations of [Recommended Style]. High-end salon photography, studio lighting. The model has [User's Ethnicity/Features].)"
-  },
-  "lookbook": [
-    {
-      "title": "string (Concept Title, e.g., The Executive)",
-      "description": "string (Description of the outfit)",
-      "search_term": "string (DALL-E prompt to generate this model's look)"
-    },
-    {
-      "title": "string",
-      "description": "string",
-      "search_term": "string"
-    },
-    {
-      "title": "string",
-      "description": "string",
-      "search_term": "string"
+  "hero_section": {
+    "vibe_title": "Short title describing the style vibe",
+    "attributes": {
+        "base": "Core materials or fabrics",
+        "energy": "The psychological or emotional vibe",
+        "season": "The most suitable personal color season"
     }
-  ],
-  "shopping_keywords": [
+  },
+  "analysis_grid": {
+    "body_type": "Specific body shape classification",
+    "body_description": "Brief explanation of analysis",
+    "rec_silhouette": "Recommended clothing silhouette",
+    "rec_silhouette_desc": "Why this works for body type",
+    "personal_color_season": "Same as hero_section.attributes.season",
+    "makeup_lip": "Recommended lip color",
+    "makeup_desc": "Description of the makeup look"
+  },
+  "lookbook_section": [
     {
-        "category": "string (e.g. Tailoring)",
-        "name": "string (e.g. Oversized Blazer)",
-        "description": "string (Why this item)",
-        "price": "string (Estimated price, e.g. $249)",
-        "query": "string (Search query for Bing, e.g. Charcoal Oversized Wool Blazer women fashion product)" 
+      "title": "Concept Title",
+      "description": "Description of the outfit",
+      "pexels_query": "Fashion search query for Pexels"
     },
-    { "category": "string", "name": "string", "description": "string", "price": "string", "query": "string" },
-    { "category": "string", "name": "string", "description": "string", "price": "string", "query": "string" },
-    { "category": "string", "name": "string", "description": "string", "price": "string", "query": "string" }
-  ]
+    { "title": "string", "description": "string", "pexels_query": "string" },
+    { "title": "string", "description": "string", "pexels_query": "string" }
+  ],
+  "hair_section": {
+    "face_shape": "One of: Oval, Round, Square, Heart, Oblong, Diamond, Triangle",
+    "advice": "Professional advice on the hairstyle"
+  },
+  "shopping_section": [
+    {
+        "category": "Item category",
+        "name": "Item name",
+        "description": "Why this fits the user",
+        "pexels_query": "Product search query for Pexels" 
+    },
+    { "category": "string", "name": "string", "description": "string", "pexels_query": "string" },
+    { "category": "string", "name": "string", "description": "string", "pexels_query": "string" },
+    { "category": "string", "name": "string", "description": "string", "pexels_query": "string" }
+  ],
+  "color_story_section": {
+    "vibe_description": "2 sentences of editorial fashion advice",
+    "palette_colors": [
+        { "hex": "Hex Code", "name": "Color Name", "role": "BASE", "application": "Tops, Bottoms, Everyday Basics" },
+        { "hex": "Hex Code", "name": "Color Name", "role": "ACCENT", "application": "Accessories, Bags, Scarves" },
+        { "hex": "Hex Code", "name": "Color Name", "role": "STATEMENT", "application": "Coat, Dress, Key Pieces" },
+        { "hex": "Hex Code", "name": "Color Name", "role": "LIP", "application": "Lipstick, Blush, Tint" },
+        { "hex": "Hex Code", "name": "Color Name", "role": "EYE", "application": "Eyeshadow, Liner, Brow" }
+    ]
+  }
 }
 `;
 
@@ -113,13 +104,13 @@ Output MUST be a valid JSON object with the following schema:
                 "Authorization": `Bearer ${env.OPENAI_API_KEY}`,
             },
             body: JSON.stringify({
-                model: "gpt-4o",
+                model: "gpt-4o-mini",
                 messages: [
                     { role: "system", content: systemPrompt },
                     {
                         role: "user",
                         content: [
-                            { type: "text", text: `Height: ${data.height}cm, Weight: ${data.weight}kg. Create a luxury fashion analysis for this user.` },
+                            { type: "text", text: `Gender: ${data.gender || 'not specified'}, Height: ${data.height}cm, Weight: ${data.weight}kg. Create a luxury fashion analysis for this user.` },
                             { type: "image_url", image_url: { url: data.photo } },
                         ],
                     },
@@ -136,49 +127,157 @@ Output MUST be a valid JSON object with the following schema:
         }
 
         const content = openaiData.choices?.[0]?.message?.content;
-        if (!content) throw new Error("No content from OpenAI");
+        if (!content) {
+            console.error("Full OpenAI Response:", JSON.stringify(openaiData, null, 2));
+            throw new Error("No content from OpenAI");
+        }
 
         const analysisResult = JSON.parse(content);
 
-        // --- Image Generation Logic (DALL-E 3) ---
-        const generateImage = async (prompt: string): Promise<string | null> => {
+        // --- Hybrid Image Sourcing Logic ---
+
+        const searchPexels = async (query: string): Promise<string | null> => {
+            if (!env.PEXELS_API_KEY) return "https://placehold.co/600x800?text=No+Pexels+Key";
             try {
-                const imgResponse = await fetch("https://api.openai.com/v1/images/generations", {
+                const res = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1`, {
+                    headers: { "Authorization": env.PEXELS_API_KEY }
+                });
+                const data = await res.json() as any;
+                return data.photos?.[0]?.src?.large || null;
+            } catch (e) { return null; }
+        };
+
+        const generateReplicateHair = async (userPhoto: string): Promise<string | null> => {
+            if (!env.REPLICATE_API_TOKEN) {
+                console.error("REPLICATE_API_TOKEN is missing");
+                return "https://placehold.co/1024x1024?text=No+Replicate+Key";
+            }
+            try {
+                console.log("Starting Replicate Hair Generation...");
+
+                // 성별에 따른 헤어스타일 프롬프트 분기 처리
+                let hairPrompt: string;
+
+                if (data.gender === "woman") {
+                    hairPrompt = `Create a 3x3 grid showing exactly these 9 hairstyles for the woman in the attached photo:
+1. Long Straight
+2. Long Layered
+3. Long Wavy
+4. Shoulder Length
+5. Lob (Long Bob)
+6. Classic Bob
+7. Short Bob with Bangs
+8. Pixie Cut
+9. Curtain Bangs with Layers
+It is CRITICAL to maintain the exact facial features, face shape, and identity of the person for all 9 images.`;
+                } else if (data.gender === "man") {
+                    hairPrompt = `Create a 3x3 grid showing exactly these 9 hairstyles for the man in the attached photo:
+1. Buzz Cut
+2. Crew Cut
+3. Two-Block
+4. Undercut
+5. Side Part
+6. Textured Crop
+7. Comma Hair
+8. Slick Back
+9. Medium Wavy
+It is CRITICAL to maintain the exact facial features, face shape, and identity of the person for all 9 images.`;
+                } else {
+                    hairPrompt = `Create a 3x3 grid showing 9 different hairstyles for the person in the attached photo. It is CRITICAL to maintain the exact facial features, face shape, and identity of the person for all 9 images.`;
+                }
+
+                const res = await fetch("https://api.replicate.com/v1/models/qwen/qwen-image-edit-2511/predictions", {
                     method: "POST",
                     headers: {
+                        "Authorization": `Bearer ${env.REPLICATE_API_TOKEN}`,
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${env.OPENAI_API_KEY}`,
+                        "Prefer": "wait"
                     },
                     body: JSON.stringify({
-                        model: "dall-e-3",
-                        prompt: `Professional high-end fashion photography. ${prompt} 8k resolution, magazine quality.`,
-                        n: 1,
-                        size: "1024x1024",
-                        quality: "standard",
-                    }),
+                        input: {
+                            prompt: hairPrompt,
+                            image: [userPhoto],
+                            go_fast: true,
+                            aspect_ratio: "1:1",
+                            output_format: "webp",
+                            output_quality: 95
+                        }
+                    })
                 });
-                const imgData = await imgResponse.json() as any;
-                if (!imgResponse.ok) return null;
-                return imgData.data?.[0]?.url || null;
+
+                let prediction = await res.json() as any;
+
+                if (!res.ok || prediction.error) {
+                    console.error("Replicate API POST Failure:", {
+                        httpStatus: res.status,
+                        error: prediction.error,
+                        detail: prediction.detail,
+                        prediction: prediction
+                    });
+                    return null;
+                }
+
+                // Polling logic: Replicate heavy models take time.
+                // Cloudflare workers have a total timeout (usually 30s), so we poll up to ~25s.
+                let attempts = 0;
+                const maxAttempts = 7; // ~21 seconds total polling time
+
+                while (prediction.status !== "succeeded" && prediction.status !== "failed" && attempts < maxAttempts) {
+                    console.log(`Polling Replicate... Status: ${prediction.status}, Attempt: ${attempts + 1}, ID: ${prediction.id}`);
+                    await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
+
+                    const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+                        headers: {
+                            "Authorization": `Bearer ${env.REPLICATE_API_TOKEN}`,
+                        }
+                    });
+
+                    if (!pollRes.ok) {
+                        const errorData = await pollRes.json() as any;
+                        console.error("Replicate Polling Error:", {
+                            httpStatus: pollRes.status,
+                            error: errorData
+                        });
+                        break;
+                    }
+
+                    prediction = await pollRes.json();
+                    attempts++;
+                }
+
+                if (prediction.status === "succeeded") {
+                    console.log("Replicate Generation Succeeded successfully.");
+                    if (Array.isArray(prediction.output)) return prediction.output[0];
+                    return prediction.output || null;
+                } else {
+                    console.error("Replicate Generation Failed or Timed out:", {
+                        status: prediction.status,
+                        id: prediction.id,
+                        error: prediction.error
+                    });
+                    return null;
+                }
             } catch (e) {
+                console.error("Exception in generateReplicateHair:", e);
                 return null;
             }
         };
 
-        // Generate images: 3 Lookbook concepts + 1 Hair Grid
-        const lookbookPromises = analysisResult.lookbook.map((look: any) => generateImage(look.search_term));
-        const hairPromise = generateImage(analysisResult.hair_analysis.dalle_prompt);
+        // Parallel Sourcing
+        const lookbookPromises = analysisResult.lookbook_section.map((look: any) => searchPexels(look.pexels_query));
+        const shoppingPromises = analysisResult.shopping_section.map((item: any) => searchPexels(item.pexels_query));
+        const hairPromise = generateReplicateHair(data.photo);
 
-        const [generatedImages, hairImage] = await Promise.all([
+        const [lookbookImages, shoppingImages, hairImage] = await Promise.all([
             Promise.all(lookbookPromises),
+            Promise.all(shoppingPromises),
             hairPromise
         ]);
 
-        // Assign images back to result
-        analysisResult.lookbook.forEach((look: any, index: number) => {
-            look.imageUrl = generatedImages[index];
-        });
-        analysisResult.hair_analysis.imageUrl = hairImage;
+        // Assign back to result
+        analysisResult.lookbook_section.forEach((look: any, i: number) => { look.imageUrl = lookbookImages[i]; });
+        analysisResult.shopping_section.forEach((item: any, i: number) => { item.imageUrl = shoppingImages[i]; });
+        analysisResult.hair_section.imageUrl = hairImage;
 
         return new Response(JSON.stringify(analysisResult), {
             headers: {
