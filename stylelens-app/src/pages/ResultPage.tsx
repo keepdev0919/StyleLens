@@ -312,16 +312,19 @@ export default function ResultPage() {
                 });
 
                 if (!res.ok) {
+                    const responseText = await res.text();
+                    let errorMessage = `Analysis failed: ${res.status}`;
+                    let wasRefunded = false;
                     try {
-                        const errorData = await res.json();
-                        const error = new Error(errorData.error || 'Analysis failed');
-                        (error as any).refunded = errorData.refunded || false;
-                        throw error;
-                    } catch (parseError) {
-                        // If JSON parsing fails, use text
-                        const errorText = await res.text();
-                        throw new Error(`Analysis failed: ${res.status} ${errorText}`);
+                        const errorData = JSON.parse(responseText);
+                        errorMessage = errorData.error || errorMessage;
+                        wasRefunded = errorData.refunded || false;
+                    } catch {
+                        errorMessage = `${errorMessage} ${responseText}`;
                     }
+                    const error = new Error(errorMessage);
+                    (error as any).refunded = wasRefunded;
+                    throw error;
                 }
 
                 const data = await res.json();
