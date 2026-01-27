@@ -215,11 +215,13 @@ export default function ResultPage() {
 
     // Auto-send email report when analysis completes
     useEffect(() => {
+        console.log('[Email] useEffect triggered:', { hasAnalysis: !!analysis, customerEmail, alreadyCalled: emailSendCalled.current });
         if (!analysis || !customerEmail || emailSendCalled.current) return;
         emailSendCalled.current = true;
 
         const sendReport = async () => {
             try {
+                console.log('[Email] Sending report to:', customerEmail);
                 const res = await fetch('/api/send-report', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -229,7 +231,9 @@ export default function ResultPage() {
                     }),
                 });
 
+                console.log('[Email] Response status:', res.status);
                 const data = await res.json();
+                console.log('[Email] Response data:', data);
 
                 if (!res.ok) {
                     throw new Error(data.error || 'Failed to send email');
@@ -239,7 +243,7 @@ export default function ResultPage() {
                 setShowToast(true);
                 setTimeout(() => setShowToast(false), 5000);
             } catch (err: any) {
-                console.error('Auto email send error:', err);
+                console.error('[Email] Auto email send error:', err);
                 setToastMessage('Failed to send report email');
                 setShowToast(true);
                 setTimeout(() => setShowToast(false), 3000);
