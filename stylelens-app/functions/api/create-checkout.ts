@@ -43,6 +43,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             successUrl: finalSuccessUrl,
         });
 
+        // Append session ID to success URL for payment verification
+        const sessionId = result.id;
+        const urlWithSession = `${finalSuccessUrl}&session_id=${sessionId}`;
+
+        // Update the result URL to include session ID
+        if (result.url) {
+            result.url = result.url.replace(finalSuccessUrl, urlWithSession);
+        }
+
         return new Response(JSON.stringify(result), {
             headers: { "Content-Type": "application/json" },
         });

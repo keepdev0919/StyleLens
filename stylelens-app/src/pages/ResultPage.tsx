@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import Footer from '../components/Footer';
@@ -91,17 +91,19 @@ const ShoppingItemCard = ({ item }: { item: ShoppingItem }) => {
 
 export default function ResultPage() {
     const location = useLocation();
-    const { userImage, height, weight, gender } = location.state || {};
+    const { userImage, height, weight, gender, orderId } = location.state || {};
     const [analysis, setAnalysis] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
+    const [refunded, setRefunded] = useState(false);
 
     const fetchCalled = useRef(false);
 
     const mainRef = useRef<HTMLElement>(null);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+    const [showDownloadMenu, setShowDownloadMenu] = useState(false);
 
     // PDF Download handler
     const handleDownloadPDF = async () => {
@@ -167,6 +169,47 @@ export default function ResultPage() {
         }
     };
 
+    // Image Download handler
+    const handleDownloadImage = async () => {
+        if (!mainRef.current || isGeneratingPdf) return;
+
+        setIsGeneratingPdf(true);
+        setToastMessage('Generating image...');
+        setShowToast(true);
+
+        try {
+            const canvas = await html2canvas(mainRef.current, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+            });
+
+            const link = document.createElement('a');
+            link.download = `StyleLens-Report-${new Date().toISOString().split('T')[0]}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+
+            setToastMessage('Image saved!');
+        } catch (err) {
+            console.error('Image generation error:', err);
+            setToastMessage('Failed to generate image');
+        } finally {
+            setIsGeneratingPdf(false);
+            setTimeout(() => setShowToast(false), 3000);
+        }
+    };
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = () => setShowDownloadMenu(false);
+        if (showDownloadMenu) {
+            document.addEventListener('click', handleClickOutside);
+            return () => document.removeEventListener('click', handleClickOutside);
+        }
+    }, [showDownloadMenu]);
+
     // Share Report handler
     const handleShare = async () => {
         const shareData = {
@@ -218,19 +261,36 @@ export default function ResultPage() {
 
                 const res = await fetch('/api/analyze', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(orderId && { 'X-Order-ID': orderId }) // Pass order ID for refund tracking
+                    },
                     body: JSON.stringify(payload)
                 });
 
                 if (!res.ok) {
-                    const errorText = await res.text();
-                    throw new Error(`Analysis failed: ${res.status} ${errorText}`);
+                    try {
+                        const errorData = await res.json();
+                        const error = new Error(errorData.error || 'Analysis failed');
+                        (error as any).refunded = errorData.refunded || false;
+                        throw error;
+                    } catch (parseError) {
+                        // If JSON parsing fails, use text
+                        const errorText = await res.text();
+                        throw new Error(`Analysis failed: ${res.status} ${errorText}`);
+                    }
                 }
 
                 const data = await res.json();
                 setAnalysis(data);
             } catch (err: any) {
                 console.error("Analysis Fetch Error:", err);
+
+                // Check if error includes refund status
+                if (err.refunded) {
+                    setRefunded(true);
+                }
+
                 setError(err.message || "Failed to analyze style. Please try again.");
             } finally {
                 setLoading(false);
@@ -261,8 +321,19 @@ export default function ResultPage() {
                     <span className="material-symbols-outlined text-red-500 text-4xl mb-4 block">error_outline</span>
                     <h2 className="text-xl font-bold text-zinc-800 mb-2">Analysis Error</h2>
                     <p className="text-zinc-600 mb-6">{error}</p>
+
+                    {refunded && (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                            <p className="text-green-800 font-semibold mb-2">✓ Payment Automatically Refunded</p>
+                            <p className="text-green-700 text-sm">
+                                Your payment has been automatically refunded.
+                                You should see the refund in your account within 3-5 business days.
+                            </p>
+                        </div>
+                    )}
+
                     <button
-                        onClick={() => window.location.reload()}
+                        onClick={() => window.location.href = '/input'}
                         className="px-8 py-3 bg-black text-white rounded-full text-sm font-bold hover:bg-zinc-800 transition-all"
                     >
                         Retry Analysis
@@ -286,7 +357,9 @@ export default function ResultPage() {
             <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-pink-50">
                 <div className="max-w-[1280px] mx-auto px-8 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <h2 className="text-xl font-bold tracking-tighter uppercase font-serif italic">Style<span className="text-primary">Lens</span></h2>
+                        <Link to="/" className="hover:opacity-80 transition-opacity">
+                            <h2 className="text-xl font-bold tracking-tighter uppercase font-serif italic">Style<span className="text-primary">Lens</span></h2>
+                        </Link>
                     </div>
                     <nav className="hidden md:flex items-center gap-10">
                         <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#identity">Identity</a>
@@ -543,14 +616,39 @@ export default function ResultPage() {
                                 Ready to Own<br />
                                 <span className="text-primary italic">Your Identity?</span>
                             </h2>
-                            <button
-                                onClick={handleDownloadPDF}
-                                disabled={isGeneratingPdf}
-                                className="w-full lg:w-auto px-12 py-5 bg-white text-black text-xl font-bold rounded-full hover:bg-zinc-200 transition-all shadow-[0_0_40px_rgba(255,255,255,0.3)] flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <span className="material-symbols-outlined">{isGeneratingPdf ? 'hourglass_empty' : 'download'}</span>
-                                {isGeneratingPdf ? 'Generating...' : 'Download Style Book'}
-                            </button>
+                            {/* Download Dropdown */}
+                            <div className="relative inline-block" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                    onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                                    disabled={isGeneratingPdf}
+                                    className="px-12 py-5 bg-white text-black text-xl font-bold rounded-full hover:bg-zinc-200 transition-all shadow-[0_0_40px_rgba(255,255,255,0.3)] flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <span className="material-symbols-outlined">{isGeneratingPdf ? 'hourglass_empty' : 'download'}</span>
+                                    {isGeneratingPdf ? 'Generating...' : 'Download Style Book'}
+                                    <span className="material-symbols-outlined text-lg">{showDownloadMenu ? 'expand_less' : 'expand_more'}</span>
+                                </button>
+
+                                {/* Dropdown Menu */}
+                                {showDownloadMenu && !isGeneratingPdf && (
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 bg-white rounded-2xl shadow-2xl overflow-hidden min-w-[200px] z-50">
+                                        <button
+                                            onClick={() => { setShowDownloadMenu(false); handleDownloadPDF(); }}
+                                            className="w-full px-6 py-4 flex items-center gap-3 hover:bg-pink-50 transition-colors text-left"
+                                        >
+                                            <span className="material-symbols-outlined text-primary">picture_as_pdf</span>
+                                            <span className="font-semibold text-zinc-800">Save as PDF</span>
+                                        </button>
+                                        <div className="h-px bg-zinc-100" />
+                                        <button
+                                            onClick={() => { setShowDownloadMenu(false); handleDownloadImage(); }}
+                                            className="w-full px-6 py-4 flex items-center gap-3 hover:bg-pink-50 transition-colors text-left"
+                                        >
+                                            <span className="material-symbols-outlined text-primary">image</span>
+                                            <span className="font-semibold text-zinc-800">Save as Image</span>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Right: 3D Report Mockup */}

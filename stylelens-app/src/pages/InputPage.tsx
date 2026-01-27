@@ -18,33 +18,71 @@ export default function InputPage() {
     const hasEffectRun = useRef(false);
 
     const [isLoading] = useState(false);
+    const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
 
     // Restore state and trigger analysis if returning from successful payment
     useEffect(() => {
         if (hasEffectRun.current) return;
 
         const paymentStatus = searchParams.get('payment');
-        if (paymentStatus === 'success') {
+        let sessionId = searchParams.get('session_id');
+
+        // Fallback: if session_id not in URL, try sessionStorage
+        if (!sessionId && paymentStatus === 'success') {
+            sessionId = sessionStorage.getItem('checkout_session_id');
+        }
+
+        if (paymentStatus === 'success' && sessionId) {
             hasEffectRun.current = true;
-            const savedData = sessionStorage.getItem('pending_style_analysis');
-            if (savedData) {
-                try {
-                    const parsed = JSON.parse(savedData);
-                    setFormData(parsed.formData);
-                    setPhotoPreview(parsed.photoPreview);
-
-                    // Trigger analysis with restored data
-                    // We need to use the parsed data directly because state updates are async
-                    performAnalysisWithData(parsed.formData, parsed.photoPreview);
-
-                    // Optional: Clear storage after success (or keep it briefly if retrying needed)
-                    sessionStorage.removeItem('pending_style_analysis');
-                } catch (e) {
-                    console.error("Failed to restore session data", e);
-                }
-            }
+            sessionStorage.removeItem('checkout_session_id'); // Clean up
+            verifyPaymentAndStartAnalysis(sessionId);
         }
     }, [searchParams]);
+
+    const verifyPaymentAndStartAnalysis = async (sessionId: string) => {
+        setIsVerifyingPayment(true);
+
+        try {
+            // Verify payment with backend
+            const verifyRes = await fetch(`/api/verify-payment?session_id=${sessionId}`);
+            const verifyData = await verifyRes.json();
+
+            if (!verifyData.verified) {
+                alert('Payment verification failed. Please contact support.');
+                setIsVerifyingPayment(false);
+                return;
+            }
+
+            // Get stored form data
+            const savedData = sessionStorage.getItem('pending_style_analysis');
+            if (!savedData) {
+                alert('Session expired. Please try again.');
+                setIsVerifyingPayment(false);
+                return;
+            }
+
+            const parsed = JSON.parse(savedData);
+
+            // Navigate to ResultPage with order ID
+            navigate('/result', {
+                state: {
+                    userImage: parsed.photoPreview,
+                    height: parsed.formData.height,
+                    weight: parsed.formData.weight,
+                    gender: parsed.formData.gender,
+                    orderId: verifyData.orderId // Pass order ID for refund tracking
+                }
+            });
+
+            // Clean up
+            sessionStorage.removeItem('pending_style_analysis');
+
+        } catch (error) {
+            console.error('Payment verification error:', error);
+            alert('Failed to verify payment. Please contact support.');
+            setIsVerifyingPayment(false);
+        }
+    };
 
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -145,6 +183,10 @@ export default function InputPage() {
             const data = await res.json();
 
             if (data.url) {
+                // Save checkout session ID for verification after payment
+                if (data.id) {
+                    sessionStorage.setItem('checkout_session_id', data.id);
+                }
                 // Redirect to Polar checkout
                 window.location.href = data.url;
             } else {
@@ -156,6 +198,17 @@ export default function InputPage() {
             sessionStorage.removeItem('pending_style_analysis');
         }
     };
+
+    // Show loading state during payment verification
+    if (isVerifyingPayment) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center font-serif text-center px-4">
+                <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-6"></div>
+                <h2 className="text-2xl font-bold italic mb-2">Verifying Payment...</h2>
+                <p className="text-zinc-500 text-sm font-sans tracking-widest uppercase mb-8">Please wait</p>
+            </div>
+        );
+    }
 
     return (
         <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-white">

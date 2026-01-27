@@ -1,8 +1,85 @@
+import { Polar } from "@polar-sh/sdk";
 
 interface Env {
     OPENAI_API_KEY: string;
     PEXELS_API_KEY: string;
     REPLICATE_API_TOKEN: string;
+    POLAR_ACCESS_TOKEN: string;
+    POLAR_SERVER?: "sandbox" | "production";
+}
+
+/**
+ * Process refund directly using Polar SDK
+ */
+async function processRefund(env: Env, orderId: string, reason: string): Promise<boolean> {
+    try {
+        console.log(`Processing refund for order ${orderId}: ${reason}`);
+
+        const polar = new Polar({
+            accessToken: env.POLAR_ACCESS_TOKEN,
+            server: env.POLAR_SERVER || "production",
+        });
+
+        // Get checkout to find amount
+        const checkout = await polar.checkouts.get({ id: orderId });
+
+        if (!checkout || !checkout.amount) {
+            console.error(`Checkout not found or no amount: ${orderId}`);
+            return false;
+        }
+
+        // Process refund via Polar API
+        await polar.refunds.create({
+            orderId: orderId,
+            amount: checkout.amount,
+            reason: 'other',
+            comment: reason || 'AI analysis failed - automatic refund',
+        });
+
+        console.log(`Successfully refunded order ${orderId}`);
+        return true;
+    } catch (error: any) {
+        console.error(`Refund error for ${orderId}:`, error.message);
+        return false;
+    }
+}
+
+
+
+/**
+ * Perform analysis with retry logic
+ */
+async function performAnalysisWithRetry(
+    env: Env,
+    data: { photo: string; height: string; weight: string; gender: string },
+    maxAttempts: number = 3
+): Promise<any> {
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            console.log(`Analysis attempt ${attempt}/${maxAttempts}`);
+            return await performAnalysis(env, data);
+        } catch (error: any) {
+            console.error(`Analysis attempt ${attempt} failed:`, error.message);
+            lastError = error;
+
+            // Don't retry on certain errors
+            if (error.message?.includes('Missing photo data') ||
+                error.message?.includes('configuration error')) {
+                throw error;
+            }
+
+            // Wait before retry (exponential backoff)
+            if (attempt < maxAttempts) {
+                const waitTime = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+            }
+        }
+    }
+
+    // All attempts failed
+    throw lastError || new Error('Analysis failed after all retry attempts');
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
@@ -14,7 +91,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             headers: {
                 "Access-Control-Allow-Origin": "*",
                 "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type",
+                "Access-Control-Allow-Headers": "Content-Type, X-Order-ID",
             },
         });
     }
@@ -26,6 +103,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         });
     }
 
+    // Get order ID from headers (passed from frontend)
+    const orderId = request.headers.get('X-Order-ID');
+
     try {
         const data = await request.json() as { photo: string; height: string; weight: string; gender: string };
 
@@ -36,7 +116,63 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             });
         }
 
-        const systemPrompt = `
+        // Perform analysis with retry logic
+        let analysisResult;
+        try {
+            analysisResult = await performAnalysisWithRetry(env, data, 3);
+        } catch (analysisError: any) {
+            console.error('Analysis failed after retries:', analysisError);
+
+            // Process refund if order ID is available
+            let refunded = false;
+            if (orderId) {
+                refunded = await processRefund(env, orderId, analysisError.message || 'Analysis failed');
+            }
+
+            // Return error with refund status
+            return new Response(JSON.stringify({
+                error: analysisError.message || 'Analysis failed',
+                refunded: refunded
+            }), {
+                status: 500,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*",
+                },
+            });
+        }
+
+        // Analysis succeeded
+        return new Response(JSON.stringify(analysisResult), {
+            headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+            },
+        });
+
+    } catch (err: any) {
+        return new Response(JSON.stringify({
+            error: err.message,
+            refunded: !!orderId // Indicate if refund was processed
+        }), {
+            status: 500,
+            headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+            },
+        });
+    }
+};
+
+/**
+ * Main analysis function (extracted for retry logic)
+ */
+async function performAnalysis(
+    env: Env,
+    data: { photo: string; height: string; weight: string; gender: string }
+): Promise<any> {
+
+    const systemPrompt = `
 You are a high-end fashion director for a luxury magazine.
 Your goal is to analyze the user's photo and physical attributes to create a personalized "Style Vibes" report.
 The user identifies as ${data.gender || 'not specified'}. Provide professional advice tailored to this identity.
@@ -98,69 +234,69 @@ Output MUST be a valid JSON object with the following schema:
 }
 `;
 
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${env.OPENAI_API_KEY}`,
-            },
-            body: JSON.stringify({
-                model: "gpt-4o-mini",
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    {
-                        role: "user",
-                        content: [
-                            { type: "text", text: `Gender: ${data.gender || 'not specified'}, Height: ${data.height}cm, Weight: ${data.weight}kg. Create a luxury fashion analysis for this user.` },
-                            { type: "image_url", image_url: { url: data.photo } },
-                        ],
-                    },
-                ],
-                response_format: { type: "json_object" },
-            }),
-        });
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+            model: "gpt-4o-mini",
+            messages: [
+                { role: "system", content: systemPrompt },
+                {
+                    role: "user",
+                    content: [
+                        { type: "text", text: `Gender: ${data.gender || 'not specified'}, Height: ${data.height}cm, Weight: ${data.weight}kg. Create a luxury fashion analysis for this user.` },
+                        { type: "image_url", image_url: { url: data.photo } },
+                    ],
+                },
+            ],
+            response_format: { type: "json_object" },
+        }),
+    });
 
-        const openaiData = await response.json() as any;
+    const openaiData = await response.json() as any;
 
-        if (openaiData.error) {
-            console.error("OpenAI Error:", openaiData.error);
-            throw new Error(openaiData.error.message);
+    if (openaiData.error) {
+        console.error("OpenAI Error:", openaiData.error);
+        throw new Error(openaiData.error.message);
+    }
+
+    const content = openaiData.choices?.[0]?.message?.content;
+    if (!content) {
+        console.error("Full OpenAI Response:", JSON.stringify(openaiData, null, 2));
+        throw new Error("No content from OpenAI");
+    }
+
+    const analysisResult = JSON.parse(content);
+
+    // --- Hybrid Image Sourcing Logic ---
+
+    const searchPexels = async (query: string): Promise<string | null> => {
+        if (!env.PEXELS_API_KEY) return "https://placehold.co/600x800?text=No+Pexels+Key";
+        try {
+            const res = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1`, {
+                headers: { "Authorization": env.PEXELS_API_KEY }
+            });
+            const data = await res.json() as any;
+            return data.photos?.[0]?.src?.large || null;
+        } catch (e) { return null; }
+    };
+
+    const generateReplicateHair = async (userPhoto: string): Promise<string | null> => {
+        if (!env.REPLICATE_API_TOKEN) {
+            console.error("REPLICATE_API_TOKEN is missing");
+            return "https://placehold.co/1024x1024?text=No+Replicate+Key";
         }
+        try {
+            console.log("Starting Replicate Hair Generation...");
 
-        const content = openaiData.choices?.[0]?.message?.content;
-        if (!content) {
-            console.error("Full OpenAI Response:", JSON.stringify(openaiData, null, 2));
-            throw new Error("No content from OpenAI");
-        }
+            // 성별에 따른 헤어스타일 프롬프트 분기 처리
+            let hairPrompt: string;
 
-        const analysisResult = JSON.parse(content);
-
-        // --- Hybrid Image Sourcing Logic ---
-
-        const searchPexels = async (query: string): Promise<string | null> => {
-            if (!env.PEXELS_API_KEY) return "https://placehold.co/600x800?text=No+Pexels+Key";
-            try {
-                const res = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1`, {
-                    headers: { "Authorization": env.PEXELS_API_KEY }
-                });
-                const data = await res.json() as any;
-                return data.photos?.[0]?.src?.large || null;
-            } catch (e) { return null; }
-        };
-
-        const generateReplicateHair = async (userPhoto: string): Promise<string | null> => {
-            if (!env.REPLICATE_API_TOKEN) {
-                console.error("REPLICATE_API_TOKEN is missing");
-                return "https://placehold.co/1024x1024?text=No+Replicate+Key";
-            }
-            try {
-                console.log("Starting Replicate Hair Generation...");
-
-                // 성별에 따른 헤어스타일 프롬프트 분기 처리
-                let hairPrompt: string;
-
-                if (data.gender === "woman") {
-                    hairPrompt = `Create a 3x3 grid showing exactly these 9 hairstyles for the woman in the attached photo:
+            if (data.gender === "woman") {
+                hairPrompt = `Create a 3x3 grid showing exactly these 9 hairstyles for the woman in the attached photo:
 1. Long Straight
 2. Long Layered
 3. Long Wavy
@@ -171,8 +307,8 @@ Output MUST be a valid JSON object with the following schema:
 8. Pixie Cut
 9. Curtain Bangs with Layers
 It is CRITICAL to maintain the exact facial features, face shape, and identity of the person for all 9 images.`;
-                } else if (data.gender === "man") {
-                    hairPrompt = `Create a 3x3 grid showing exactly these 9 hairstyles for the man in the attached photo:
+            } else if (data.gender === "man") {
+                hairPrompt = `Create a 3x3 grid showing exactly these 9 hairstyles for the man in the attached photo:
 1. Buzz Cut
 2. Crew Cut
 3. Two-Block
@@ -183,117 +319,103 @@ It is CRITICAL to maintain the exact facial features, face shape, and identity o
 8. Slick Back
 9. Medium Wavy
 It is CRITICAL to maintain the exact facial features, face shape, and identity of the person for all 9 images.`;
-                } else {
-                    hairPrompt = `Create a 3x3 grid showing 9 different hairstyles for the person in the attached photo. It is CRITICAL to maintain the exact facial features, face shape, and identity of the person for all 9 images.`;
-                }
+            } else {
+                hairPrompt = `Create a 3x3 grid showing 9 different hairstyles for the person in the attached photo. It is CRITICAL to maintain the exact facial features, face shape, and identity of the person for all 9 images.`;
+            }
 
-                const res = await fetch("https://api.replicate.com/v1/models/qwen/qwen-image-edit-2511/predictions", {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${env.REPLICATE_API_TOKEN}`,
-                        "Content-Type": "application/json",
-                        "Prefer": "wait"
-                    },
-                    body: JSON.stringify({
-                        input: {
-                            prompt: hairPrompt,
-                            image: [userPhoto],
-                            go_fast: true,
-                            aspect_ratio: "1:1",
-                            output_format: "webp",
-                            output_quality: 95
-                        }
-                    })
-                });
-
-                let prediction = await res.json() as any;
-
-                if (!res.ok || prediction.error) {
-                    console.error("Replicate API POST Failure:", {
-                        httpStatus: res.status,
-                        error: prediction.error,
-                        detail: prediction.detail,
-                        prediction: prediction
-                    });
-                    return null;
-                }
-
-                // Polling logic: Replicate heavy models take time.
-                // Cloudflare workers have a total timeout (usually 30s), so we poll up to ~25s.
-                let attempts = 0;
-                const maxAttempts = 7; // ~21 seconds total polling time
-
-                while (prediction.status !== "succeeded" && prediction.status !== "failed" && attempts < maxAttempts) {
-                    console.log(`Polling Replicate... Status: ${prediction.status}, Attempt: ${attempts + 1}, ID: ${prediction.id}`);
-                    await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
-
-                    const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
-                        headers: {
-                            "Authorization": `Bearer ${env.REPLICATE_API_TOKEN}`,
-                        }
-                    });
-
-                    if (!pollRes.ok) {
-                        const errorData = await pollRes.json() as any;
-                        console.error("Replicate Polling Error:", {
-                            httpStatus: pollRes.status,
-                            error: errorData
-                        });
-                        break;
+            const res = await fetch("https://api.replicate.com/v1/models/qwen/qwen-image-edit-2511/predictions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${env.REPLICATE_API_TOKEN}`,
+                    "Content-Type": "application/json",
+                    "Prefer": "wait"
+                },
+                body: JSON.stringify({
+                    input: {
+                        prompt: hairPrompt,
+                        image: [userPhoto],
+                        go_fast: true,
+                        aspect_ratio: "1:1",
+                        output_format: "webp",
+                        output_quality: 95
                     }
+                })
+            });
 
-                    prediction = await pollRes.json();
-                    attempts++;
-                }
+            let prediction = await res.json() as any;
 
-                if (prediction.status === "succeeded") {
-                    console.log("Replicate Generation Succeeded successfully.");
-                    if (Array.isArray(prediction.output)) return prediction.output[0];
-                    return prediction.output || null;
-                } else {
-                    console.error("Replicate Generation Failed or Timed out:", {
-                        status: prediction.status,
-                        id: prediction.id,
-                        error: prediction.error
-                    });
-                    return null;
-                }
-            } catch (e) {
-                console.error("Exception in generateReplicateHair:", e);
+            if (!res.ok || prediction.error) {
+                console.error("Replicate API POST Failure:", {
+                    httpStatus: res.status,
+                    error: prediction.error,
+                    detail: prediction.detail,
+                    prediction: prediction
+                });
                 return null;
             }
-        };
 
-        // Parallel Sourcing
-        const lookbookPromises = analysisResult.lookbook_section.map((look: any) => searchPexels(look.pexels_query));
-        const shoppingPromises = analysisResult.shopping_section.map((item: any) => searchPexels(item.pexels_query));
-        const hairPromise = generateReplicateHair(data.photo);
+            // Polling logic: Replicate heavy models take time.
+            // Cloudflare workers have a total timeout (usually 30s), so we poll up to ~25s.
+            let attempts = 0;
+            const maxAttempts = 7; // ~21 seconds total polling time
 
-        const [lookbookImages, shoppingImages, hairImage] = await Promise.all([
-            Promise.all(lookbookPromises),
-            Promise.all(shoppingPromises),
-            hairPromise
-        ]);
+            while (prediction.status !== "succeeded" && prediction.status !== "failed" && attempts < maxAttempts) {
+                console.log(`Polling Replicate... Status: ${prediction.status}, Attempt: ${attempts + 1}, ID: ${prediction.id}`);
+                await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
 
-        // Assign back to result
-        analysisResult.lookbook_section.forEach((look: any, i: number) => { look.imageUrl = lookbookImages[i]; });
-        analysisResult.shopping_section.forEach((item: any, i: number) => { item.imageUrl = shoppingImages[i]; });
-        analysisResult.hair_section.imageUrl = hairImage;
+                const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+                    headers: {
+                        "Authorization": `Bearer ${env.REPLICATE_API_TOKEN}`,
+                    }
+                });
 
-        return new Response(JSON.stringify(analysisResult), {
-            headers: {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-            },
-        });
+                if (!pollRes.ok) {
+                    const errorData = await pollRes.json() as any;
+                    console.error("Replicate Polling Error:", {
+                        httpStatus: pollRes.status,
+                        error: errorData
+                    });
+                    break;
+                }
 
-    } catch (err: any) {
-        return new Response(JSON.stringify({ error: err.message }), {
-            status: 500,
-            headers: {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-            },
-        });
-    }
-};
+                prediction = await pollRes.json();
+                attempts++;
+            }
+
+            if (prediction.status === "succeeded") {
+                console.log("Replicate Generation Succeeded successfully.");
+                if (Array.isArray(prediction.output)) return prediction.output[0];
+                return prediction.output || null;
+            } else {
+                console.error("Replicate Generation Failed or Timed out:", {
+                    status: prediction.status,
+                    id: prediction.id,
+                    error: prediction.error
+                });
+                return null;
+            }
+        } catch (e) {
+            console.error("Exception in generateReplicateHair:", e);
+            return null;
+        }
+    };
+
+    // Parallel Sourcing
+    const lookbookPromises = analysisResult.lookbook_section.map((look: any) => searchPexels(look.pexels_query));
+    const shoppingPromises = analysisResult.shopping_section.map((item: any) => searchPexels(item.pexels_query));
+    const hairPromise = generateReplicateHair(data.photo);
+
+    const [lookbookImages, shoppingImages, hairImage] = await Promise.all([
+        Promise.all(lookbookPromises),
+        Promise.all(shoppingPromises),
+        hairPromise
+    ]);
+
+    // Assign back to result
+    analysisResult.lookbook_section.forEach((look: any, i: number) => { look.imageUrl = lookbookImages[i]; });
+    analysisResult.shopping_section.forEach((item: any, i: number) => { item.imageUrl = shoppingImages[i]; });
+    analysisResult.hair_section.imageUrl = hairImage;
+
+    // Return analysis result
+    return analysisResult;
+}
