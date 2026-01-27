@@ -45,11 +45,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
             });
         }
 
-        // Payment verified - return order_id for refund tracking
+        // Payment verified - return order_id for refund tracking + customer email
         return new Response(JSON.stringify({
             verified: true,
             status: checkout.status,
-            orderId: (checkout as any).order_id || checkout.id
+            orderId: (checkout as any).order_id || checkout.id,
+            customerEmail: (checkout as any).customer_email || (checkout as any).customerEmail || null
         }), {
             headers: { 'Content-Type': 'application/json' }
         });

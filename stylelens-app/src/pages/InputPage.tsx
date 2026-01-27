@@ -63,14 +63,15 @@ export default function InputPage() {
 
             const parsed = JSON.parse(savedData);
 
-            // Navigate to ResultPage with order ID
+            // Navigate to ResultPage with order ID and customer email
             navigate('/result', {
                 state: {
                     userImage: parsed.photoPreview,
                     height: parsed.formData.height,
                     weight: parsed.formData.weight,
                     gender: parsed.formData.gender,
-                    orderId: verifyData.orderId // Pass order ID for refund tracking
+                    orderId: verifyData.orderId, // Pass order ID for refund tracking
+                    customerEmail: verifyData.customerEmail // Pass email for report delivery
                 }
             });
 

@@ -91,7 +91,7 @@ const ShoppingItemCard = ({ item }: { item: ShoppingItem }) => {
 
 export default function ResultPage() {
     const location = useLocation();
-    const { userImage, height, weight, gender, orderId } = location.state || {};
+    const { userImage, height, weight, gender, orderId, customerEmail } = location.state || {};
     const [analysis, setAnalysis] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -104,6 +104,9 @@ export default function ResultPage() {
     const mainRef = useRef<HTMLElement>(null);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
     const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+
+    // Email sending states
+    const emailSendCalled = useRef(false);
 
     // PDF Download handler
     const handleDownloadPDF = async () => {
@@ -209,6 +212,42 @@ export default function ResultPage() {
             return () => document.removeEventListener('click', handleClickOutside);
         }
     }, [showDownloadMenu]);
+
+    // Auto-send email report when analysis completes
+    useEffect(() => {
+        if (!analysis || !customerEmail || emailSendCalled.current) return;
+        emailSendCalled.current = true;
+
+        const sendReport = async () => {
+            try {
+                const res = await fetch('/api/send-report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: customerEmail,
+                        analysis: analysis,
+                    }),
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'Failed to send email');
+                }
+
+                setToastMessage('Report sent to your email!');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 5000);
+            } catch (err: any) {
+                console.error('Auto email send error:', err);
+                setToastMessage('Failed to send report email');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
+            }
+        };
+
+        sendReport();
+    }, [analysis, customerEmail]);
 
     // Share Report handler
     const handleShare = async () => {
@@ -649,6 +688,7 @@ export default function ResultPage() {
                                     </div>
                                 )}
                             </div>
+
                         </div>
 
                         {/* Right: 3D Report Mockup */}
