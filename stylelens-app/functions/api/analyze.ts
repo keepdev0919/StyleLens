@@ -2,6 +2,7 @@ import { Polar } from "@polar-sh/sdk";
 
 interface Env {
     OPENAI_API_KEY: string;
+    OPENAI_BASE_URL?: string; // Optional: use Cloudflare AI Gateway URL to avoid region blocks
     PEXELS_API_KEY: string;
     REPLICATE_API_TOKEN: string;
     POLAR_ACCESS_TOKEN: string;
@@ -66,7 +67,8 @@ async function performAnalysisWithRetry(
 
             // Don't retry on certain errors
             if (error.message?.includes('Missing photo data') ||
-                error.message?.includes('configuration error')) {
+                error.message?.includes('configuration error') ||
+                error.message?.includes('Country, region, or territory not supported')) {
                 throw error;
             }
 
@@ -234,7 +236,8 @@ Output MUST be a valid JSON object with the following schema:
 }
 `;
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const openaiBaseUrl = env.OPENAI_BASE_URL || "https://api.openai.com/v1";
+    const response = await fetch(`${openaiBaseUrl}/chat/completions`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
