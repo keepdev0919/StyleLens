@@ -31,10 +31,21 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         // Get checkout session
         const checkout = await polar.checkouts.get({ id: sessionId });
 
+        // Debug: log checkout object keys and status
+        console.log('Checkout status:', checkout.status);
+        console.log('Checkout keys:', Object.keys(checkout));
+        console.log('Checkout email fields:', {
+            customer_email: (checkout as any).customer_email,
+            customerEmail: (checkout as any).customerEmail,
+            email: (checkout as any).email,
+            customer: (checkout as any).customer,
+        });
+
         // Check payment status (Polar uses 'succeeded' or 'confirmed')
         const isVerified = checkout.status === 'succeeded' || checkout.status === 'confirmed';
 
         if (!isVerified) {
+            console.log('Payment not verified. Status:', checkout.status);
             return new Response(JSON.stringify({
                 error: 'Payment not confirmed',
                 status: checkout.status,
@@ -46,11 +57,19 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         }
 
         // Payment verified - return order_id for refund tracking + customer email
+        const customerEmail = (checkout as any).customer_email
+            || (checkout as any).customerEmail
+            || (checkout as any).email
+            || (checkout as any).customer?.email
+            || null;
+
+        console.log('Resolved customerEmail:', customerEmail);
+
         return new Response(JSON.stringify({
             verified: true,
             status: checkout.status,
             orderId: (checkout as any).order_id || checkout.id,
-            customerEmail: (checkout as any).customer_email || (checkout as any).customerEmail || null
+            customerEmail
         }), {
             headers: { 'Content-Type': 'application/json' }
         });

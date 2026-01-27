@@ -27,9 +27,14 @@ export default function InputPage() {
         const paymentStatus = searchParams.get('payment');
         let sessionId = searchParams.get('session_id');
 
+        console.log('[Payment Flow] URL params:', { paymentStatus, sessionId });
+        console.log('[Payment Flow] sessionStorage checkout_session_id:', sessionStorage.getItem('checkout_session_id'));
+        console.log('[Payment Flow] sessionStorage pending_style_analysis exists:', !!sessionStorage.getItem('pending_style_analysis'));
+
         // Fallback: if session_id not in URL, try sessionStorage
         if (!sessionId && paymentStatus === 'success') {
             sessionId = sessionStorage.getItem('checkout_session_id');
+            console.log('[Payment Flow] Using fallback sessionId from sessionStorage:', sessionId);
         }
 
         if (paymentStatus === 'success' && sessionId) {
@@ -44,10 +49,13 @@ export default function InputPage() {
 
         try {
             // Verify payment with backend
+            console.log('[Payment Flow] Verifying payment with session_id:', sessionId);
             const verifyRes = await fetch(`/api/verify-payment?session_id=${sessionId}`);
             const verifyData = await verifyRes.json();
+            console.log('[Payment Flow] Verify response:', verifyData);
 
             if (!verifyData.verified) {
+                console.error('[Payment Flow] Verification failed:', verifyData);
                 alert('Payment verification failed. Please contact support.');
                 setIsVerifyingPayment(false);
                 return;
@@ -55,7 +63,9 @@ export default function InputPage() {
 
             // Get stored form data
             const savedData = sessionStorage.getItem('pending_style_analysis');
+            console.log('[Payment Flow] pending_style_analysis exists:', !!savedData);
             if (!savedData) {
+                console.error('[Payment Flow] No saved data in sessionStorage');
                 alert('Session expired. Please try again.');
                 setIsVerifyingPayment(false);
                 return;
