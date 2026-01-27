@@ -143,20 +143,6 @@ export default function InputPage() {
         }
     };
 
-    const performAnalysisWithData = async (data: typeof formData, preview: string) => {
-        // Navigate immediately to ResultPage to let it handle the analysis
-        // This ensures the user sees the "Designing Your Cover" loading screen
-        navigate('/result', {
-            state: {
-                userData: data,
-                userImage: preview, // Pass base64 image
-                height: data.height,
-                weight: data.weight,
-                gender: data.gender === 'other' ? data.customGender : data.gender
-            }
-        });
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
