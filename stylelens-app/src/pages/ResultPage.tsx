@@ -3,8 +3,11 @@ import { useLocation, Link } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import Footer from '../components/Footer';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useSettings } from '../context/SettingsContext';
+import { t } from '../i18n';
 
-// Intefaces
+// Interfaces
 interface ShoppingItem {
     name: string;
     description: string;
@@ -92,6 +95,7 @@ const ShoppingItemCard = ({ item }: { item: ShoppingItem }) => {
 export default function ResultPage() {
     const location = useLocation();
     const { userImage, height, weight, gender, orderId, customerEmail } = location.state || {};
+    const { language } = useSettings();
     const [analysis, setAnalysis] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -113,7 +117,7 @@ export default function ResultPage() {
         if (!mainRef.current || isGeneratingPdf) return;
 
         setIsGeneratingPdf(true);
-        setToastMessage('Generating PDF...');
+        setToastMessage(t(language, 'result.toast.pdf'));
         setShowToast(true);
 
         try {
@@ -162,10 +166,10 @@ export default function ResultPage() {
             }
 
             pdf.save(`StyleLens-Report-${new Date().toISOString().split('T')[0]}.pdf`);
-            setToastMessage('PDF downloaded successfully!');
+            setToastMessage(t(language, 'result.toast.pdfDone'));
         } catch (err) {
             console.error('PDF generation error:', err);
-            setToastMessage('Failed to generate PDF');
+            setToastMessage(t(language, 'result.toast.pdfFail'));
         } finally {
             setIsGeneratingPdf(false);
             setTimeout(() => setShowToast(false), 3000);
@@ -177,7 +181,7 @@ export default function ResultPage() {
         if (!mainRef.current || isGeneratingPdf) return;
 
         setIsGeneratingPdf(true);
-        setToastMessage('Generating image...');
+        setToastMessage(t(language, 'result.toast.image'));
         setShowToast(true);
 
         try {
@@ -194,10 +198,10 @@ export default function ResultPage() {
             link.href = canvas.toDataURL('image/png');
             link.click();
 
-            setToastMessage('Image saved!');
+            setToastMessage(t(language, 'result.toast.imageDone'));
         } catch (err) {
             console.error('Image generation error:', err);
-            setToastMessage('Failed to generate image');
+            setToastMessage(t(language, 'result.toast.imageFail'));
         } finally {
             setIsGeneratingPdf(false);
             setTimeout(() => setShowToast(false), 3000);
@@ -239,25 +243,25 @@ export default function ResultPage() {
                     throw new Error(data.error || 'Failed to send email');
                 }
 
-                setToastMessage('Report sent to your email!');
+                setToastMessage(t(language, 'result.toast.emailSent'));
                 setShowToast(true);
                 setTimeout(() => setShowToast(false), 5000);
             } catch (err: any) {
                 console.error('[Email] Auto email send error:', err);
-                setToastMessage('Failed to send report email');
+                setToastMessage(t(language, 'result.toast.emailFail'));
                 setShowToast(true);
                 setTimeout(() => setShowToast(false), 3000);
             }
         };
 
         sendReport();
-    }, [analysis, customerEmail]);
+    }, [analysis, customerEmail, language]);
 
     // Share Report handler
     const handleShare = async () => {
         const shareData = {
-            title: 'My StyleLens Report',
-            text: 'Check out my personalized style analysis!',
+            title: t(language, 'share.title'),
+            text: t(language, 'share.text'),
             url: window.location.href
         };
 
@@ -266,7 +270,7 @@ export default function ResultPage() {
                 await navigator.share(shareData);
             } else {
                 await navigator.clipboard.writeText(window.location.href);
-                setToastMessage('Link copied to clipboard!');
+                setToastMessage(t(language, 'result.toast.linkCopied'));
                 setShowToast(true);
                 setTimeout(() => setShowToast(false), 3000);
             }
@@ -274,11 +278,11 @@ export default function ResultPage() {
             // User cancelled or error - fallback to clipboard
             try {
                 await navigator.clipboard.writeText(window.location.href);
-                setToastMessage('Link copied to clipboard!');
+                setToastMessage(t(language, 'result.toast.linkCopied'));
                 setShowToast(true);
                 setTimeout(() => setShowToast(false), 3000);
             } catch {
-                setToastMessage('Failed to copy link');
+                setToastMessage(t(language, 'result.toast.linkFail'));
                 setShowToast(true);
                 setTimeout(() => setShowToast(false), 3000);
             }
@@ -291,12 +295,8 @@ export default function ResultPage() {
 
         const fetchAnalysis = async () => {
             try {
-                // If no user data, fallback or error. 
-                // For dev purposes, we allow loading even without state if likely testing, 
-                // but usually this needs input. We will try to fetch if we have 'userImage' OR just proceed to handle empty gracefully.
-
                 const payload = {
-                    photo: userImage || "https://placehold.co/600x800", // Dev fallback
+                    photo: userImage || "https://placehold.co/600x800",
                     height: height || "170",
                     weight: weight || "60",
                     gender: gender || "woman"
@@ -306,7 +306,7 @@ export default function ResultPage() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        ...(orderId && { 'X-Order-ID': orderId }) // Pass order ID for refund tracking
+                        ...(orderId && { 'X-Order-ID': orderId })
                     },
                     body: JSON.stringify(payload)
                 });
@@ -332,7 +332,6 @@ export default function ResultPage() {
             } catch (err: any) {
                 console.error("Analysis Fetch Error:", err);
 
-                // Check if error includes refund status
                 if (err.refunded) {
                     setRefunded(true);
                 }
@@ -344,17 +343,17 @@ export default function ResultPage() {
         };
 
         fetchAnalysis();
-    }, [userImage, height, weight]);
+    }, [userImage, height, weight, gender, orderId]);
 
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center font-serif text-center px-4">
                 <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-6"></div>
-                <h2 className="text-2xl font-bold italic mb-2">Designing Your Cover...</h2>
-                <p className="text-zinc-500 text-sm font-sans tracking-widest uppercase mb-8">Analyzing Proportions & Vibe</p>
+                <h2 className="text-2xl font-bold italic mb-2">{t(language, 'result.loading.title')}</h2>
+                <p className="text-zinc-500 text-sm font-sans tracking-widest uppercase mb-8">{t(language, 'result.loading.subtitle')}</p>
                 <div className="text-xs text-zinc-400 max-w-md">
-                    Creating personalized lookbooks may take up to 30 seconds.<br />
-                    Please do not close this window.
+                    {t(language, 'result.loading.hint')}<br />
+                    {t(language, 'result.loading.warning')}
                 </div>
             </div>
         );
@@ -365,15 +364,14 @@ export default function ResultPage() {
             <div className="min-h-screen flex items-center justify-center text-center p-10 bg-slate-50">
                 <div className="bg-white p-10 rounded-2xl shadow-xl max-w-lg">
                     <span className="material-symbols-outlined text-red-500 text-4xl mb-4 block">error_outline</span>
-                    <h2 className="text-xl font-bold text-zinc-800 mb-2">Analysis Error</h2>
+                    <h2 className="text-xl font-bold text-zinc-800 mb-2">{t(language, 'result.error.title')}</h2>
                     <p className="text-zinc-600 mb-6">{error}</p>
 
                     {refunded && (
                         <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                            <p className="text-green-800 font-semibold mb-2">✓ Payment Automatically Refunded</p>
+                            <p className="text-green-800 font-semibold mb-2">✓ {t(language, 'result.error.refunded.title')}</p>
                             <p className="text-green-700 text-sm">
-                                Your payment has been automatically refunded.
-                                You should see the refund in your account within 3-5 business days.
+                                {t(language, 'result.error.refunded.desc')}
                             </p>
                         </div>
                     )}
@@ -382,10 +380,10 @@ export default function ResultPage() {
                         onClick={() => window.location.href = '/input'}
                         className="px-8 py-3 bg-black text-white rounded-full text-sm font-bold hover:bg-zinc-800 transition-all"
                     >
-                        Retry Analysis
+                        {t(language, 'result.error.retry')}
                     </button>
                     <div className="mt-4">
-                        <a href="/input" className="text-xs text-zinc-400 underline hover:text-primary">Return to Input Page</a>
+                        <a href="/input" className="text-xs text-zinc-400 underline hover:text-primary">{t(language, 'result.error.return')}</a>
                     </div>
                 </div>
             </div>
@@ -408,18 +406,21 @@ export default function ResultPage() {
                         </Link>
                     </div>
                     <nav className="hidden md:flex items-center gap-10">
-                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#identity">Identity</a>
-                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#lookbook">Lookbook</a>
-                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#hair">Hair</a>
-                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#shopping">Shopping</a>
-                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#colors">Colors</a>
+                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#identity">{t(language, 'result.nav.identity')}</a>
+                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#lookbook">{t(language, 'result.nav.lookbook')}</a>
+                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#hair">{t(language, 'result.nav.hair')}</a>
+                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#shopping">{t(language, 'result.nav.shopping')}</a>
+                        <a className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors" href="#colors">{t(language, 'result.nav.colors')}</a>
                     </nav>
-                    <button
-                        onClick={handleShare}
-                        className="px-6 py-2 border border-zinc-200 rounded-full text-[11px] font-bold uppercase tracking-widest hover:border-primary hover:text-primary transition-all"
-                    >
-                        Share Report
-                    </button>
+                    <div className="flex items-center gap-4">
+                        <LanguageSwitcher />
+                        <button
+                            onClick={handleShare}
+                            className="px-6 py-2 border border-zinc-200 rounded-full text-[11px] font-bold uppercase tracking-widest hover:border-primary hover:text-primary transition-all"
+                        >
+                            {t(language, 'result.share')}
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -435,23 +436,23 @@ export default function ResultPage() {
                 <section id="identity" className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center mb-24 scroll-mt-24">
                     <div className="lg:col-span-7">
                         <div className="flex items-center gap-4 mb-6">
-                            <span className="inline-block px-4 py-1.5 badge-gradient text-white text-[10px] font-bold uppercase tracking-[0.2em] rounded-full">Top 3% Rare Identity</span>
+                            <span className="inline-block px-4 py-1.5 badge-gradient text-white text-[10px] font-bold uppercase tracking-[0.2em] rounded-full">{t(language, 'result.hero.badge')}</span>
                         </div>
                         <h1 className="text-6xl md:text-8xl font-bold font-serif mb-12 leading-tight">
-                            Your Vibe:<br />
+                            {t(language, 'result.hero.vibePrefix')}<br />
                             <span className="text-primary italic">{hero_section?.vibe_title || "Unknown Vibe"}</span>
                         </h1>
                         <div className="flex gap-16 border-t border-pink-100 pt-8">
                             <div>
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">Primary Base</span>
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">{t(language, 'result.hero.base')}</span>
                                 <span className="text-xl font-serif font-bold">{hero_section?.attributes?.base || "-"}</span>
                             </div>
                             <div>
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">Energy</span>
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">{t(language, 'result.hero.energy')}</span>
                                 <span className="text-xl font-serif font-bold">{hero_section?.attributes?.energy || "-"}</span>
                             </div>
                             <div>
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">Season</span>
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">{t(language, 'result.hero.season')}</span>
                                 <span className="text-xl font-serif font-bold">{hero_section?.attributes?.season || "-"}</span>
                             </div>
                         </div>
@@ -477,9 +478,9 @@ export default function ResultPage() {
                         <div className="w-12 h-12 bg-accent-pink rounded-xl flex items-center justify-center text-primary mb-6">
                             <span className="material-symbols-outlined">hourglass_empty</span>
                         </div>
-                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Body Type</h3>
-                        <p className="text-2xl font-bold font-serif mb-4">{analysis_grid?.body_type || "Analyzing..."}</p>
-                        <p className="text-xs text-zinc-500 leading-relaxed border-t border-pink-50 pt-4">{analysis_grid?.body_description || "Processing..."}</p>
+                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-2">{t(language, 'result.sections.bodyType')}</h3>
+                        <p className="text-2xl font-bold font-serif mb-4">{analysis_grid?.body_type || t(language, 'result.analyzing')}</p>
+                        <p className="text-xs text-zinc-500 leading-relaxed border-t border-pink-50 pt-4">{analysis_grid?.body_description || t(language, 'result.processing')}</p>
                     </div>
 
                     {/* Card 2: Color Season */}
@@ -487,8 +488,8 @@ export default function ResultPage() {
                         <div className="w-12 h-12 bg-accent-pink rounded-xl flex items-center justify-center text-primary mb-6">
                             <span className="material-symbols-outlined">palette</span>
                         </div>
-                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Color Season</h3>
-                        <p className="text-2xl font-bold font-serif mb-4">{analysis_grid?.personal_color_season || "Analyzing..."}</p>
+                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-2">{t(language, 'result.sections.colorSeason')}</h3>
+                        <p className="text-2xl font-bold font-serif mb-4">{analysis_grid?.personal_color_season || t(language, 'result.analyzing')}</p>
                         <div className="flex gap-2 mt-2">
                             {(color_story_section?.palette_colors || []).slice(0, 3).map((c: any, i: number) => (
                                 <div key={i} className="w-4 h-4 rounded-full" style={{ backgroundColor: c.hex }}></div>
@@ -501,9 +502,9 @@ export default function ResultPage() {
                         <div className="w-12 h-12 bg-accent-pink rounded-xl flex items-center justify-center text-primary mb-6">
                             <span className="material-symbols-outlined">check_circle</span>
                         </div>
-                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Best Silhouette</h3>
-                        <p className="text-xl font-bold font-serif mb-4">{analysis_grid?.rec_silhouette || "Analyzing..."}</p>
-                        <p className="text-xs text-zinc-500 leading-relaxed">{analysis_grid?.rec_silhouette_desc || "Processing..."}</p>
+                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-2">{t(language, 'result.sections.bestSilhouette')}</h3>
+                        <p className="text-xl font-bold font-serif mb-4">{analysis_grid?.rec_silhouette || t(language, 'result.analyzing')}</p>
+                        <p className="text-xs text-zinc-500 leading-relaxed">{analysis_grid?.rec_silhouette_desc || t(language, 'result.processing')}</p>
                     </div>
 
                     {/* Card 4: Signature Lip */}
@@ -511,9 +512,9 @@ export default function ResultPage() {
                         <div className="w-12 h-12 bg-accent-pink rounded-xl flex items-center justify-center text-primary mb-6">
                             <span className="material-symbols-outlined">face</span>
                         </div>
-                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Signature Lip</h3>
-                        <p className="text-2xl font-bold font-serif mb-4">{analysis_grid?.makeup_lip || "Analyzing..."}</p>
-                        <p className="text-xs text-zinc-500 leading-relaxed">{analysis_grid?.makeup_desc || "Processing..."}</p>
+                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-2">{t(language, 'result.sections.signatureLip')}</h3>
+                        <p className="text-2xl font-bold font-serif mb-4">{analysis_grid?.makeup_lip || t(language, 'result.analyzing')}</p>
+                        <p className="text-xs text-zinc-500 leading-relaxed">{analysis_grid?.makeup_desc || t(language, 'result.processing')}</p>
                     </div>
                 </section>
 
@@ -521,17 +522,16 @@ export default function ResultPage() {
                 <section id="lookbook" className="mb-24 scroll-mt-24">
                     <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
                         <div>
-                            <h2 className="text-4xl font-bold font-serif mb-2">Identity Lookbook</h2>
-                            <p className="text-zinc-500 uppercase text-[11px] font-bold tracking-[0.3em]">AI-Generated Curated Concepts</p>
+                            <h2 className="text-4xl font-bold font-serif mb-2">{t(language, 'result.lookbook.title')}</h2>
+                            <p className="text-zinc-500 uppercase text-[11px] font-bold tracking-[0.3em]">{t(language, 'result.lookbook.subtitle')}</p>
                         </div>
                         <div className="h-px flex-1 bg-pink-100 mx-12 hidden md:block mb-4"></div>
-                        {/* View All Button Removed as per User Request */}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
                         {(lookbook_section || []).map((look: any, idx: number) => (
                             <div key={idx} className="relative group border-l border-zinc-100 pl-10 py-6 hover:border-primary transition-colors duration-500">
                                 {/* Concept Label */}
-                                <span className="text-[10px] font-bold text-primary tracking-[0.4em] uppercase mb-6 block">Concept 0{idx + 1}</span>
+                                <span className="text-[10px] font-bold text-primary tracking-[0.4em] uppercase mb-6 block">{t(language, 'result.lookbook.concept')} 0{idx + 1}</span>
 
                                 <h3 className="text-3xl font-bold font-serif mb-6 leading-tight transition-all">
                                     {look.title}
@@ -541,7 +541,7 @@ export default function ResultPage() {
                                     {look.description}
                                 </p>
 
-                                {/* Substantially Larger Mood Image */}
+                                {/* Mood Image */}
                                 <div className="relative">
                                     <div className="aspect-square w-full max-w-[200px] md:max-w-none rounded-[2.5rem] overflow-hidden magazine-shadow-sm border border-white">
                                         <div
@@ -550,7 +550,7 @@ export default function ResultPage() {
                                         ></div>
                                     </div>
                                     {/* Vertical Tag */}
-                                    <div className="absolute top-8 -right-4 bg-zinc-900 text-white text-[8px] font-bold uppercase tracking-[0.3em] py-1.5 px-4 rotate-90 rounded-sm shadow-xl">Vibe Story</div>
+                                    <div className="absolute top-8 -right-4 bg-zinc-900 text-white text-[8px] font-bold uppercase tracking-[0.3em] py-1.5 px-4 rotate-90 rounded-sm shadow-xl">{t(language, 'result.lookbook.vibeStory')}</div>
                                 </div>
                             </div>
                         ))}
@@ -574,22 +574,22 @@ export default function ResultPage() {
 
                         {/* Right: Expert Analysis & Advice */}
                         <div className="lg:col-span-6 order-1 lg:order-2">
-                            <div className="inline-block px-4 py-1.5 bg-zinc-900 text-white text-[10px] font-bold uppercase tracking-[0.2em] rounded-full mb-8">Premium Analysis</div>
+                            <div className="inline-block px-4 py-1.5 bg-zinc-900 text-white text-[10px] font-bold uppercase tracking-[0.2em] rounded-full mb-8">{t(language, 'result.hair.badge')}</div>
                             <h2 className="text-5xl md:text-6xl font-bold font-serif mb-8 leading-tight">
-                                Visualizing Your<br />
-                                <span className="text-primary italic">Perfect Cut</span>
+                                {t(language, 'result.hair.title1')}<br />
+                                <span className="text-primary italic">{t(language, 'result.hair.title2')}</span>
                             </h2>
 
                             <div className="space-y-8">
                                 <div>
-                                    <h3 className="text-[11px] font-bold uppercase tracking-widest text-primary mb-3">Face Shape Detection</h3>
-                                    <p className="text-2xl font-serif font-bold italic text-black">{hair_section?.face_shape || "Analyzing..."}</p>
+                                    <h3 className="text-[11px] font-bold uppercase tracking-widest text-primary mb-3">{t(language, 'result.hair.faceShape')}</h3>
+                                    <p className="text-2xl font-serif font-bold italic text-black">{hair_section?.face_shape || t(language, 'result.analyzing')}</p>
                                 </div>
 
                                 <div className="p-8 bg-pink-50/50 rounded-2xl border border-pink-100">
-                                    <h3 className="text-[11px] font-bold uppercase tracking-widest text-primary mb-4">Master Stylist's Advice</h3>
+                                    <h3 className="text-[11px] font-bold uppercase tracking-widest text-primary mb-4">{t(language, 'result.hair.advice')}</h3>
                                     <p className="text-lg text-zinc-800 leading-relaxed font-serif">
-                                        "{hair_section?.advice || "Preparing your personalized hair journey..."}"
+                                        "{hair_section?.advice || t(language, 'result.hair.loading')}"
                                     </p>
                                 </div>
                             </div>
@@ -608,8 +608,8 @@ export default function ResultPage() {
                 {/* SHOPPING BOUTIQUE SECTION */}
                 <section id="shopping" className="mb-24 bg-accent-pink/30 rounded-[2rem] p-12 md:p-20 border border-pink-100 scroll-mt-24">
                     <div className="text-center mb-16">
-                        <h2 className="text-4xl font-bold font-serif mb-4">Must-Have Now</h2>
-                        <p className="text-zinc-500 uppercase text-[11px] font-bold tracking-[0.3em]">The Boutique-Curated Essentials</p>
+                        <h2 className="text-4xl font-bold font-serif mb-4">{t(language, 'result.shopping.title')}</h2>
+                        <p className="text-zinc-500 uppercase text-[11px] font-bold tracking-[0.3em]">{t(language, 'result.shopping.subtitle')}</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {(shopping_section || []).map((item: any, idx: number) => (
@@ -622,7 +622,7 @@ export default function ResultPage() {
                 <section id="colors" className="mb-24 scroll-mt-24">
                     <div className="text-center mb-12">
                         <h2 className="text-4xl font-bold font-serif mb-4">
-                            {hero_section?.attributes?.season || "Your"} <span className="text-primary italic">Color Story</span>
+                            {hero_section?.attributes?.season || "Your"} <span className="text-primary italic">{t(language, 'result.colorStory.title')}</span>
                         </h2>
                         <p className="text-zinc-500 leading-relaxed max-w-2xl mx-auto">
                             {color_story_section?.vibe_description}
@@ -635,7 +635,6 @@ export default function ResultPage() {
                     </div>
                 </section>
 
-                {/* CTA SECTION */}
                 {/* CTA SECTION: Split Screen Visual Proof */}
                 <section className="bg-zinc-900 rounded-[2rem] p-12 lg:p-20 text-white relative overflow-hidden">
                     {/* Animation Keyframes */}
@@ -659,8 +658,8 @@ export default function ResultPage() {
                         {/* Left: Text & Action */}
                         <div className="text-center lg:text-left">
                             <h2 className="text-5xl lg:text-7xl font-bold font-serif mb-8 leading-tight">
-                                Ready to Own<br />
-                                <span className="text-primary italic">Your Identity?</span>
+                                {t(language, 'result.cta.title1')}<br />
+                                <span className="text-primary italic">{t(language, 'result.cta.title2')}</span>
                             </h2>
                             {/* Download Dropdown */}
                             <div className="relative inline-block" onClick={(e) => e.stopPropagation()}>
@@ -670,7 +669,7 @@ export default function ResultPage() {
                                     className="px-12 py-5 bg-white text-black text-xl font-bold rounded-full hover:bg-zinc-200 transition-all shadow-[0_0_40px_rgba(255,255,255,0.3)] flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <span className="material-symbols-outlined">{isGeneratingPdf ? 'hourglass_empty' : 'download'}</span>
-                                    {isGeneratingPdf ? 'Generating...' : 'Download Style Book'}
+                                    {isGeneratingPdf ? t(language, 'result.generating') : t(language, 'result.download')}
                                     <span className="material-symbols-outlined text-lg">{showDownloadMenu ? 'expand_less' : 'expand_more'}</span>
                                 </button>
 
@@ -682,7 +681,7 @@ export default function ResultPage() {
                                             className="w-full px-6 py-4 flex items-center gap-3 hover:bg-pink-50 transition-colors text-left"
                                         >
                                             <span className="material-symbols-outlined text-primary">picture_as_pdf</span>
-                                            <span className="font-semibold text-zinc-800">Save as PDF</span>
+                                            <span className="font-semibold text-zinc-800">{t(language, 'result.download.pdf')}</span>
                                         </button>
                                         <div className="h-px bg-zinc-100" />
                                         <button
@@ -690,7 +689,7 @@ export default function ResultPage() {
                                             className="w-full px-6 py-4 flex items-center gap-3 hover:bg-pink-50 transition-colors text-left"
                                         >
                                             <span className="material-symbols-outlined text-primary">image</span>
-                                            <span className="font-semibold text-zinc-800">Save as Image</span>
+                                            <span className="font-semibold text-zinc-800">{t(language, 'result.download.image')}</span>
                                         </button>
                                     </div>
                                 )}
@@ -712,11 +711,10 @@ export default function ResultPage() {
                                     </div>
                                     <div className="flex-1 p-6 flex flex-col justify-between border-t border-zinc-800">
                                         <div>
-                                            <p className="text-[10px] text-primary font-bold tracking-[0.3em] uppercase mb-2">Style Data 2024</p>
+                                            <p className="text-[10px] text-primary font-bold tracking-[0.3em] uppercase mb-2">{t(language, 'result.cta.styleData')}</p>
                                             <h3 className="text-2xl font-serif font-bold leading-none">{hero_section?.vibe_title || "My Style"}</h3>
                                         </div>
                                         <div className="flex justify-end items-end">
-                                            {/* Confidential text removed */}
                                         </div>
                                     </div>
                                 </div>

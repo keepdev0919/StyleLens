@@ -1,8 +1,12 @@
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { useSettings } from '../context/SettingsContext';
+import { t } from '../i18n';
 
 export default function TermsPage() {
+    const { language } = useSettings();
+
     return (
         <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
             <Header variant="landing" />
@@ -12,11 +16,17 @@ export default function TermsPage() {
                     <div className="max-w-[800px] mx-auto">
                         <Link to="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-primary transition-colors mb-8">
                             <span className="material-symbols-outlined text-xl">arrow_back</span>
-                            <span className="font-medium">Back to Home</span>
+                            <span className="font-medium">{t(language, 'legal.backToHome')}</span>
                         </Link>
 
                         <h1 className="text-4xl lg:text-5xl font-bold mb-4">Terms of Service</h1>
                         <p className="text-gray-500 mb-12">Last updated: January 2025</p>
+
+                        {language === 'ko' && (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
+                                <p className="text-yellow-800 font-medium">{t(language, 'legal.englishOnly')}</p>
+                            </div>
+                        )}
 
                         <div className="prose prose-lg max-w-none">
                             <section className="mb-10">

@@ -1,37 +1,40 @@
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { useSettings } from '../context/SettingsContext';
+import { t } from '../i18n';
 
 export default function LandingPage() {
+    const { language } = useSettings();
+
     return (
         <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
             <Header variant="landing" />
 
             <main className="flex-grow pt-24">
-                {/* Hero Section */}
-                {/* Hero Section - Option 1: Split Layout */}
+                {/* Hero Section - Split Layout */}
                 <section className="relative px-6 lg:px-20 py-12 lg:py-20 overflow-hidden">
                     <div className="max-w-[1280px] mx-auto grid lg:grid-cols-12 gap-12 items-center">
 
                         {/* Left Content (Text) - Span 7 */}
                         <div className="lg:col-span-7 flex flex-col gap-8 text-center lg:text-left z-10">
                             <h1 className="hero-title text-5xl lg:text-7xl font-black leading-[1.1] text-black tracking-tight">
-                                Discover Your <br className="hidden lg:block" />
-                                Perfect Look with <br className="hidden lg:block" />
+                                {t(language, 'landing.hero.title1')} <br className="hidden lg:block" />
+                                {t(language, 'landing.hero.title2')} <br className="hidden lg:block" />
                                 <span className="text-primary italic relative inline-block">
-                                    StyleLens
+                                    {t(language, 'landing.hero.title3')}
                                     <svg className="absolute w-full h-3 -bottom-1 left-0 text-primary/20" viewBox="0 0 100 10" preserveAspectRatio="none">
                                         <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
                                     </svg>
                                 </span>
                             </h1>
                             <p className="text-xl text-gray-600 leading-relaxed font-medium max-w-2xl mx-auto lg:mx-0">
-                                AI-powered fashion and grooming analysis tailored to your unique body and style.
+                                {t(language, 'landing.hero.subtitle')}
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 pt-2 justify-center lg:justify-start">
                                 <Link to="/input">
                                     <button className="bg-primary hover:opacity-90 text-white text-lg font-bold px-10 py-4 rounded-full transition-all shadow-xl shadow-primary/30 flex items-center gap-2 mx-auto lg:mx-0">
-                                        Start Your Style Journey
+                                        {t(language, 'landing.cta')}
                                         <span className="material-symbols-outlined text-sm">arrow_forward</span>
                                     </button>
                                 </Link>
@@ -45,7 +48,7 @@ export default function LandingPage() {
                                     ))}
                                 </div>
                                 <div className="text-sm font-semibold text-gray-500">
-                                    Join our Styling Community
+                                    {t(language, 'landing.trust')}
                                 </div>
                             </div>
                         </div>
@@ -63,8 +66,8 @@ export default function LandingPage() {
                                 <div className="absolute bottom-6 left-6 right-6 p-4 rounded-xl glass-nav border border-white/40 backdrop-blur-md shadow-lg flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center font-bold text-xs">A+</div>
                                     <div>
-                                        <div className="text-[10px] uppercase font-bold tracking-wider text-gray-500">Match Score</div>
-                                        <div className="font-bold text-sm text-slate-800">Sophisticated Chic</div>
+                                        <div className="text-[10px] uppercase font-bold tracking-wider text-gray-500">{t(language, 'landing.hero.badge.label')}</div>
+                                        <div className="font-bold text-sm text-slate-800">{t(language, 'landing.hero.badge.value')}</div>
                                     </div>
                                 </div>
                             </div>
@@ -79,8 +82,8 @@ export default function LandingPage() {
                 {/* Testimonials Section (Infinite Marquee) */}
                 <section className="py-24 bg-white border-y border-black/5 overflow-hidden" id="testimonials">
                     <div className="text-center mb-16 px-6">
-                        <p className="text-primary font-bold tracking-[0.2em] uppercase text-xs mb-4">Success Stories</p>
-                        <h2 className="hero-title text-4xl font-bold">User Transformations</h2>
+                        <p className="text-primary font-bold tracking-[0.2em] uppercase text-xs mb-4">{t(language, 'landing.testimonials.badge')}</p>
+                        <h2 className="hero-title text-4xl font-bold">{t(language, 'landing.testimonials.title')}</h2>
                     </div>
 
                     <div className="relative w-full">
@@ -125,8 +128,8 @@ export default function LandingPage() {
                 <section className="px-6 lg:px-20 py-32" id="how-it-works">
                     <div className="max-w-[1280px] mx-auto">
                         <div className="flex flex-col gap-6 mb-20 text-center">
-                            <h2 className="hero-title text-4xl lg:text-5xl font-bold">The StyleLens Method</h2>
-                            <p className="text-gray-500 max-w-2xl mx-auto text-lg font-medium">Three simple steps to redefine your look with state-of-the-art artificial intelligence.</p>
+                            <h2 className="hero-title text-4xl lg:text-5xl font-bold">{t(language, 'landing.howItWorks.title')}</h2>
+                            <p className="text-gray-500 max-w-2xl mx-auto text-lg font-medium">{t(language, 'landing.howItWorks.subtitle')}</p>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                             <div className="group relative p-10 rounded-[2rem] bg-gray-50 border border-transparent hover:border-primary/20 transition-all duration-500">
@@ -134,24 +137,24 @@ export default function LandingPage() {
                                 <div className="w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center text-primary mb-8 transition-transform group-hover:scale-110">
                                     <span className="material-symbols-outlined text-4xl">upload_file</span>
                                 </div>
-                                <h3 className="text-2xl font-bold mb-4">Upload Photos</h3>
-                                <p className="text-gray-600 leading-relaxed font-medium">Securely upload your photos and share your style goals with our intelligent assistant.</p>
+                                <h3 className="text-2xl font-bold mb-4">{t(language, 'landing.howItWorks.step1.title')}</h3>
+                                <p className="text-gray-600 leading-relaxed font-medium">{t(language, 'landing.howItWorks.step1.desc')}</p>
                             </div>
                             <div className="group relative p-10 rounded-[2rem] bg-gray-50 border border-transparent hover:border-primary/20 transition-all duration-500">
                                 <div className="absolute top-6 right-10 text-7xl font-black text-black/5 group-hover:text-primary/10 transition-colors">02</div>
                                 <div className="w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center text-primary mb-8 transition-transform group-hover:scale-110">
                                     <span className="material-symbols-outlined text-4xl">psychology</span>
                                 </div>
-                                <h3 className="text-2xl font-bold mb-4">Neural Analysis</h3>
-                                <p className="text-gray-600 leading-relaxed font-medium">Our engine analyzes your features, color palette, and proportions against current fashion metrics.</p>
+                                <h3 className="text-2xl font-bold mb-4">{t(language, 'landing.howItWorks.step2.title')}</h3>
+                                <p className="text-gray-600 leading-relaxed font-medium">{t(language, 'landing.howItWorks.step2.desc')}</p>
                             </div>
                             <div className="group relative p-10 rounded-[2rem] bg-gray-50 border border-transparent hover:border-primary/20 transition-all duration-500">
                                 <div className="absolute top-6 right-10 text-7xl font-black text-black/5 group-hover:text-primary/10 transition-colors">03</div>
                                 <div className="w-16 h-16 rounded-2xl bg-white shadow-sm flex items-center justify-center text-primary mb-8 transition-transform group-hover:scale-110">
                                     <span className="material-symbols-outlined text-4xl">checkroom</span>
                                 </div>
-                                <h3 className="text-2xl font-bold mb-4">Curated Recommendations</h3>
-                                <p className="text-gray-600 leading-relaxed font-medium">Receive a personalized digital style book and grooming guide built specifically for you.</p>
+                                <h3 className="text-2xl font-bold mb-4">{t(language, 'landing.howItWorks.step3.title')}</h3>
+                                <p className="text-gray-600 leading-relaxed font-medium">{t(language, 'landing.howItWorks.step3.desc')}</p>
                             </div>
                         </div>
                     </div>
@@ -161,16 +164,16 @@ export default function LandingPage() {
                 <section className="px-6 lg:px-20 py-32 text-center relative overflow-hidden bg-gray-50" id="start">
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
                     <div className="max-w-4xl mx-auto relative z-10">
-                        <h2 className="hero-title text-5xl lg:text-7xl font-bold mb-10">Ready to Elevate <br />Your Aesthetic?</h2>
+                        <h2 className="hero-title text-5xl lg:text-7xl font-bold mb-10">{t(language, 'landing.ctaSection.title1')} <br />{t(language, 'landing.ctaSection.title2')}</h2>
                         <p className="text-xl text-gray-600 mb-12 leading-relaxed font-medium max-w-2xl mx-auto">
-                            Discover your unique style with AI-powered fashion analysis tailored just for you.
+                            {t(language, 'landing.ctaSection.subtitle')}
                         </p>
                         <Link to="/input">
                             <button className="bg-primary hover:opacity-90 text-white text-xl font-bold px-16 py-6 rounded-full transition-all shadow-2xl shadow-primary/40">
-                                Start Your Style Journey
+                                {t(language, 'landing.cta')}
                             </button>
                         </Link>
-                        <p className="mt-8 text-sm font-bold text-gray-400 tracking-wide uppercase">Unlock your potential today.</p>
+                        <p className="mt-8 text-sm font-bold text-gray-400 tracking-wide uppercase">{t(language, 'landing.ctaSection.footer')}</p>
                     </div>
                 </section>
             </main>

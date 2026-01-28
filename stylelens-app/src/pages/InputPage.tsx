@@ -2,23 +2,67 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import UnitToggle from '../components/UnitToggle';
+import { useSettings } from '../context/SettingsContext';
+import { t } from '../i18n';
+import { cmToFtIn, ftInToCm, kgToLbs, lbsToKg } from '../utils/unitConversion';
 
 export default function InputPage() {
     const navigate = useNavigate();
+    const { language, unitSystem } = useSettings();
+
     const [formData, setFormData] = useState({
         photo: null as File | null,
         gender: 'woman' as 'man' | 'woman' | 'other',
         customGender: '',
-        height: '',
-        weight: '',
+        heightCm: '',
+        weightKg: '',
+        heightFt: '',
+        heightIn: '',
+        weightLbs: '',
     });
     const [photoPreview, setPhotoPreview] = useState<string>('');
 
     const [searchParams] = useSearchParams();
     const hasEffectRun = useRef(false);
+    const prevUnitSystem = useRef(unitSystem);
 
     const [isLoading] = useState(false);
     const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+
+    // Convert values when unit system toggles
+    useEffect(() => {
+        if (prevUnitSystem.current === unitSystem) return;
+        prevUnitSystem.current = unitSystem;
+
+        setFormData(prev => {
+            if (unitSystem === 'imperial') {
+                // Metric -> Imperial
+                const cm = Number(prev.heightCm);
+                const kg = Number(prev.weightKg);
+                const converted = cm ? cmToFtIn(cm) : null;
+                const lbs = kg ? kgToLbs(kg) : '';
+                return {
+                    ...prev,
+                    heightFt: converted ? String(converted.ft) : '',
+                    heightIn: converted ? String(converted.in) : '',
+                    weightLbs: lbs !== '' ? String(lbs) : '',
+                };
+            } else {
+                // Imperial -> Metric
+                const ft = Number(prev.heightFt);
+                const inches = Number(prev.heightIn);
+                const lbs = Number(prev.weightLbs);
+                const cm = (ft || inches) ? ftInToCm(ft || 0, inches || 0) : '';
+                const kg = lbs ? lbsToKg(lbs) : '';
+                return {
+                    ...prev,
+                    heightCm: cm !== '' ? String(cm) : '',
+                    weightKg: kg !== '' ? String(kg) : '',
+                };
+            }
+        });
+    }, [unitSystem]);
 
     // Restore state and trigger analysis if returning from successful payment
     useEffect(() => {
@@ -56,7 +100,7 @@ export default function InputPage() {
 
             if (!verifyData.verified) {
                 console.error('[Payment Flow] Verification failed:', verifyData);
-                alert('Payment verification failed. Please contact support.');
+                alert(t(language, 'alert.paymentFailed'));
                 setIsVerifyingPayment(false);
                 return;
             }
@@ -66,7 +110,7 @@ export default function InputPage() {
             console.log('[Payment Flow] pending_style_analysis exists:', !!savedData);
             if (!savedData) {
                 console.error('[Payment Flow] No saved data in sessionStorage');
-                alert('Session expired. Please try again.');
+                alert(t(language, 'alert.sessionExpired'));
                 setIsVerifyingPayment(false);
                 return;
             }
@@ -77,11 +121,11 @@ export default function InputPage() {
             navigate('/result', {
                 state: {
                     userImage: parsed.photoPreview,
-                    height: parsed.formData.height,
-                    weight: parsed.formData.weight,
+                    height: parsed.height,
+                    weight: parsed.weight,
                     gender: parsed.formData.gender,
-                    orderId: verifyData.orderId, // Pass order ID for refund tracking
-                    customerEmail: verifyData.customerEmail // Pass email for report delivery
+                    orderId: verifyData.orderId,
+                    customerEmail: verifyData.customerEmail
                 }
             });
 
@@ -90,7 +134,7 @@ export default function InputPage() {
 
         } catch (error) {
             console.error('Payment verification error:', error);
-            alert('Failed to verify payment. Please contact support.');
+            alert(t(language, 'alert.paymentFailed'));
             setIsVerifyingPayment(false);
         }
     };
@@ -98,9 +142,6 @@ export default function InputPage() {
     const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            // Validate basic type availability or just try to convert everything
-            // Note: iOS/Mac HEIC might be 'image/heic' or ''
-
             setFormData({ ...formData, photo: file });
 
             // Use Canvas to normalize to JPEG
@@ -109,7 +150,6 @@ export default function InputPage() {
 
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                // Limit max dimension to avoid huge payloads (OpenAI has limits/costs)
                 const MAX_DIM = 1024;
                 let width = img.width;
                 let height = img.height;
@@ -131,7 +171,6 @@ export default function InputPage() {
                 const ctx = canvas.getContext('2d');
                 if (ctx) {
                     ctx.drawImage(img, 0, 0, width, height);
-                    // Force JPEG format
                     const jpegBase64 = canvas.toDataURL('image/jpeg', 0.8);
                     setPhotoPreview(jpegBase64);
                 }
@@ -139,8 +178,6 @@ export default function InputPage() {
             };
 
             img.onerror = () => {
-                // Fallback to basic file reader if image loading fails (though unlikely for valid images)
-                // This might happen if browser doesn't support the format (e.g. old Chrome with HEIC)
                 const reader = new FileReader();
                 reader.onloadend = () => {
                     setPhotoPreview(reader.result as string);
@@ -157,13 +194,26 @@ export default function InputPage() {
         e.preventDefault();
 
         if (!photoPreview) {
-            alert("Please upload a photo first.");
+            alert(t(language, 'alert.photoRequired'));
             return;
         }
 
-        // Save form data for after payment redirect
+        // Always convert to metric for API
+        const heightCm = unitSystem === 'imperial'
+            ? String(ftInToCm(Number(formData.heightFt) || 0, Number(formData.heightIn) || 0))
+            : formData.heightCm;
+        const weightKg = unitSystem === 'imperial'
+            ? String(lbsToKg(Number(formData.weightLbs)))
+            : formData.weightKg;
+
+        // Save form data for after payment redirect (always metric)
         sessionStorage.setItem('pending_style_analysis', JSON.stringify({
-            formData,
+            formData: {
+                gender: formData.gender,
+                customGender: formData.customGender,
+            },
+            height: heightCm,
+            weight: weightKg,
             photoPreview
         }));
 
@@ -180,18 +230,16 @@ export default function InputPage() {
             const data = await res.json();
 
             if (data.url) {
-                // Save checkout session ID for verification after payment
                 if (data.id) {
                     sessionStorage.setItem('checkout_session_id', data.id);
                 }
-                // Redirect to Polar checkout
                 window.location.href = data.url;
             } else {
                 throw new Error(data.error || 'Failed to create checkout');
             }
         } catch (error) {
             console.error('Checkout error:', error);
-            alert('Failed to start checkout. Please try again.');
+            alert(t(language, 'alert.checkoutFailed'));
             sessionStorage.removeItem('pending_style_analysis');
         }
     };
@@ -201,11 +249,17 @@ export default function InputPage() {
         return (
             <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center font-serif text-center px-4">
                 <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-6"></div>
-                <h2 className="text-2xl font-bold italic mb-2">Verifying Payment...</h2>
-                <p className="text-zinc-500 text-sm font-sans tracking-widest uppercase mb-8">Please wait</p>
+                <h2 className="text-2xl font-bold italic mb-2">{t(language, 'input.verifying.title')}</h2>
+                <p className="text-zinc-500 text-sm font-sans tracking-widest uppercase mb-8">{t(language, 'input.verifying.subtitle')}</p>
             </div>
         );
     }
+
+    const genderOptions = [
+        { id: 'woman', label: t(language, 'input.gender.female') },
+        { id: 'man', label: t(language, 'input.gender.male') },
+        { id: 'other', label: t(language, 'input.gender.other') }
+    ];
 
     return (
         <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-white">
@@ -214,8 +268,8 @@ export default function InputPage() {
             {isLoading && (
                 <div className="fixed inset-0 z-[60] bg-white/80 backdrop-blur-md flex flex-col items-center justify-center">
                     <div className="w-20 h-20 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-8"></div>
-                    <h3 className="text-2xl font-bold text-slate-900 mb-2">Analyzing Your Style</h3>
-                    <p className="text-slate-500 font-medium animate-pulse">Consulting our AI stylists...</p>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-2">{t(language, 'input.loading.title')}</h3>
+                    <p className="text-slate-500 font-medium animate-pulse">{t(language, 'input.loading.subtitle')}</p>
                 </div>
             )}
 
@@ -224,10 +278,10 @@ export default function InputPage() {
                     {/* Page Header */}
                     <div className="text-center mb-12">
                         <h1 className="hero-title text-5xl lg:text-6xl font-bold mb-6 text-black">
-                            Tell Us About <span className="text-primary italic">Yourself</span>
+                            {t(language, 'input.title1')} <span className="text-primary italic">{t(language, 'input.title2')}</span>
                         </h1>
                         <p className="text-xl text-gray-600 leading-relaxed font-medium">
-                            Share your photo and measurements to receive personalized style recommendations.
+                            {t(language, 'input.subtitle')}
                         </p>
                     </div>
 
@@ -236,7 +290,7 @@ export default function InputPage() {
                         {/* Photo Upload */}
                         <div className="mb-10">
                             <label className="block text-lg font-bold text-slate-900 mb-4">
-                                Your Photo
+                                {t(language, 'input.photo.label')}
                             </label>
                             <div className="flex flex-col items-center">
                                 {photoPreview ? (
@@ -256,7 +310,7 @@ export default function InputPage() {
                                 ) : (
                                     <label className="w-64 h-64 rounded-2xl border-2 border-dashed border-gray-300 hover:border-primary transition-all cursor-pointer flex flex-col items-center justify-center gap-4 bg-gray-50 hover:bg-accent-pink/30">
                                         <span className="material-symbols-outlined text-6xl text-gray-400">upload_file</span>
-                                        <span className="text-sm font-semibold text-gray-600">Click to upload photo</span>
+                                        <span className="text-sm font-semibold text-gray-600">{t(language, 'input.photo.upload')}</span>
                                         <input
                                             type="file"
                                             accept="image/*"
@@ -268,21 +322,17 @@ export default function InputPage() {
                                 )}
                             </div>
                             <p className="text-sm text-gray-500 text-center mt-4">
-                                Upload a clear, front-facing photo for best results
+                                {t(language, 'input.photo.hint')}
                             </p>
                         </div>
 
                         {/* Gender Selection */}
                         <div className="mb-10">
                             <label className="block text-lg font-bold text-slate-900 mb-4">
-                                Gender / Identity
+                                {t(language, 'input.gender.label')}
                             </label>
                             <div className="grid grid-cols-3 gap-4 mb-4">
-                                {[
-                                    { id: 'woman', label: 'Female' },
-                                    { id: 'man', label: 'Male' },
-                                    { id: 'other', label: 'Other' }
-                                ].map((opt) => (
+                                {genderOptions.map((opt) => (
                                     <button
                                         key={opt.id}
                                         type="button"
@@ -303,7 +353,7 @@ export default function InputPage() {
                                         type="text"
                                         value={formData.customGender}
                                         onChange={(e) => setFormData({ ...formData, customGender: e.target.value })}
-                                        placeholder="How would you like to be described? (e.g. Non-binary, Masculine woman)"
+                                        placeholder={t(language, 'input.gender.placeholder')}
                                         className="w-full px-6 py-4 rounded-xl border-2 border-primary focus:outline-none text-base font-medium transition-all"
                                         required={formData.gender === 'other'}
                                     />
@@ -311,38 +361,85 @@ export default function InputPage() {
                             )}
                         </div>
 
+                        {/* Unit Toggle */}
+                        <UnitToggle />
+
                         {/* Height Input */}
                         <div className="mb-8">
                             <label className="block text-lg font-bold text-slate-900 mb-4">
-                                Height (cm)
+                                {t(language, 'input.height.label')} ({unitSystem === 'metric' ? t(language, 'input.height.cm') : `${t(language, 'input.height.ft')} / ${t(language, 'input.height.in')}`})
                             </label>
-                            <input
-                                type="number"
-                                value={formData.height}
-                                onChange={(e) => setFormData({ ...formData, height: e.target.value })}
-                                placeholder="e.g., 175"
-                                className="w-full px-6 py-4 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none text-lg font-medium transition-all"
-                                required
-                                min="100"
-                                max="250"
-                            />
+                            {unitSystem === 'metric' ? (
+                                <input
+                                    type="number"
+                                    value={formData.heightCm}
+                                    onChange={(e) => setFormData({ ...formData, heightCm: e.target.value })}
+                                    placeholder={t(language, 'input.height.placeholder.cm')}
+                                    className="w-full px-6 py-4 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none text-lg font-medium transition-all"
+                                    required
+                                    min="100"
+                                    max="250"
+                                />
+                            ) : (
+                                <div className="flex gap-4">
+                                    <div className="flex-1 relative">
+                                        <input
+                                            type="number"
+                                            value={formData.heightFt}
+                                            onChange={(e) => setFormData({ ...formData, heightFt: e.target.value })}
+                                            placeholder={t(language, 'input.height.placeholder.ft')}
+                                            className="w-full px-6 py-4 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none text-lg font-medium transition-all pr-12"
+                                            required
+                                            min="3"
+                                            max="8"
+                                        />
+                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">ft</span>
+                                    </div>
+                                    <div className="flex-1 relative">
+                                        <input
+                                            type="number"
+                                            value={formData.heightIn}
+                                            onChange={(e) => setFormData({ ...formData, heightIn: e.target.value })}
+                                            placeholder={t(language, 'input.height.placeholder.in')}
+                                            className="w-full px-6 py-4 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none text-lg font-medium transition-all pr-12"
+                                            required
+                                            min="0"
+                                            max="11"
+                                        />
+                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">in</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Weight Input */}
                         <div className="mb-10">
                             <label className="block text-lg font-bold text-slate-900 mb-4">
-                                Weight (kg)
+                                {t(language, 'input.weight.label')} ({unitSystem === 'metric' ? t(language, 'input.weight.kg') : t(language, 'input.weight.lbs')})
                             </label>
-                            <input
-                                type="number"
-                                value={formData.weight}
-                                onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-                                placeholder="e.g., 70"
-                                className="w-full px-6 py-4 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none text-lg font-medium transition-all"
-                                required
-                                min="30"
-                                max="200"
-                            />
+                            {unitSystem === 'metric' ? (
+                                <input
+                                    type="number"
+                                    value={formData.weightKg}
+                                    onChange={(e) => setFormData({ ...formData, weightKg: e.target.value })}
+                                    placeholder={t(language, 'input.weight.placeholder.kg')}
+                                    className="w-full px-6 py-4 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none text-lg font-medium transition-all"
+                                    required
+                                    min="30"
+                                    max="200"
+                                />
+                            ) : (
+                                <input
+                                    type="number"
+                                    value={formData.weightLbs}
+                                    onChange={(e) => setFormData({ ...formData, weightLbs: e.target.value })}
+                                    placeholder={t(language, 'input.weight.placeholder.lbs')}
+                                    className="w-full px-6 py-4 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none text-lg font-medium transition-all"
+                                    required
+                                    min="66"
+                                    max="440"
+                                />
+                            )}
                         </div>
 
                         {/* Submit Button */}
@@ -351,7 +448,7 @@ export default function InputPage() {
                             disabled={isLoading}
                             className="w-full bg-primary hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xl font-bold px-12 py-5 rounded-full transition-all shadow-xl shadow-primary/30"
                         >
-                            {isLoading ? 'Processing...' : 'Analyze My Style'}
+                            {isLoading ? t(language, 'input.processing') : t(language, 'input.submit')}
                         </button>
                     </form>
                 </div>
