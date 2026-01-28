@@ -119,11 +119,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         }
 
         // Perform analysis with retry logic
+        console.log('[Analyze] Starting analysis, OPENAI_BASE_URL:', env.OPENAI_BASE_URL || '(not set, using default)');
         let analysisResult;
         try {
             analysisResult = await performAnalysisWithRetry(env, data, 3);
         } catch (analysisError: any) {
-            console.error('Analysis failed after retries:', analysisError);
+            console.error('[Analyze] Failed after retries:', analysisError.message, analysisError.stack);
 
             // Process refund if order ID is available
             let refunded = false;
@@ -237,7 +238,9 @@ Output MUST be a valid JSON object with the following schema:
 `;
 
     const openaiBaseUrl = env.OPENAI_BASE_URL || "https://api.openai.com/v1";
-    const response = await fetch(`${openaiBaseUrl}/chat/completions`, {
+    const fullUrl = `${openaiBaseUrl}/chat/completions`;
+    console.log('[Analyze] Calling OpenAI at:', fullUrl);
+    const response = await fetch(fullUrl, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
