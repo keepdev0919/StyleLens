@@ -66,10 +66,13 @@ function generateEmailHTML(analysis: AnalysisData): string {
     `).join('');
 
     const lookbookHTML = lookbook_section.map((look, idx) => `
-        <div style="margin-bottom: 24px; padding: 20px; background: #fafafa; border-radius: 12px;">
-            <p style="font-size: 10px; color: #E91E8C; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 8px;">Concept ${String(idx + 1).padStart(2, '0')}</p>
-            <h3 style="margin: 0 0 8px; font-size: 18px; font-family: Georgia, serif;">${look.title}</h3>
-            <p style="margin: 0; font-size: 14px; color: #666; line-height: 1.5;">${look.description}</p>
+        <div style="margin-bottom: 24px; background: #fafafa; border-radius: 12px; overflow: hidden;">
+            ${look.imageUrl ? `<img src="${look.imageUrl}" alt="${look.title}" style="width: 100%; height: 200px; object-fit: cover; display: block;" />` : ''}
+            <div style="padding: 20px;">
+                <p style="font-size: 10px; color: #E91E8C; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 8px;">Concept ${String(idx + 1).padStart(2, '0')}</p>
+                <h3 style="margin: 0 0 8px; font-size: 18px; font-family: Georgia, serif;">${look.title}</h3>
+                <p style="margin: 0; font-size: 14px; color: #666; line-height: 1.5;">${look.description}</p>
+            </div>
         </div>
     `).join('');
 
@@ -186,6 +189,12 @@ function generateEmailHTML(analysis: AnalysisData): string {
                             <h3 style="margin: 0 0 8px; font-size: 20px; font-family: Georgia, serif; text-align: center;">Your Perfect Cut</h3>
                             <p style="margin: 0 0 24px; font-size: 11px; color: #E91E8C; text-transform: uppercase; letter-spacing: 2px; text-align: center;">Hair Studio Analysis</p>
 
+                            ${hair_section.imageUrl ? `
+                            <div style="margin-bottom: 16px; border-radius: 12px; overflow: hidden;">
+                                <img src="${hair_section.imageUrl}" alt="Hair Style Recommendations" style="width: 100%; display: block; border-radius: 12px;" />
+                            </div>
+                            ` : ''}
+
                             <div style="background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px;">
                                 <p style="margin: 0 0 4px; font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 1px;">Face Shape</p>
                                 <p style="margin: 0 0 16px; font-size: 24px; font-weight: bold; font-family: Georgia, serif; font-style: italic;">${hair_section.face_shape}</p>
@@ -208,10 +217,13 @@ function generateEmailHTML(analysis: AnalysisData): string {
                                 <tr>
                                     ${shopping_section.slice(0, 2).map(item => `
                                         <td style="width: 50%; vertical-align: top;">
-                                            <div style="background: #fafafa; border-radius: 12px; padding: 16px; text-align: center;">
-                                                <p style="font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 4px;">${item.category}</p>
-                                                <h4 style="margin: 0 0 8px; font-size: 14px; font-family: Georgia, serif;">${item.name}</h4>
-                                                <p style="margin: 0; font-size: 11px; color: #666; line-height: 1.4;">${item.description}</p>
+                                            <div style="background: #fafafa; border-radius: 12px; overflow: hidden; text-align: center;">
+                                                ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${item.name}" style="width: 100%; height: 140px; object-fit: cover; display: block;" />` : ''}
+                                                <div style="padding: 16px;">
+                                                    <p style="font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 4px;">${item.category}</p>
+                                                    <h4 style="margin: 0 0 8px; font-size: 14px; font-family: Georgia, serif;">${item.name}</h4>
+                                                    <p style="margin: 0; font-size: 11px; color: #666; line-height: 1.4;">${item.description}</p>
+                                                </div>
                                             </div>
                                         </td>
                                     `).join('')}
@@ -219,10 +231,13 @@ function generateEmailHTML(analysis: AnalysisData): string {
                                 <tr>
                                     ${shopping_section.slice(2, 4).map(item => `
                                         <td style="width: 50%; vertical-align: top;">
-                                            <div style="background: #fafafa; border-radius: 12px; padding: 16px; text-align: center;">
-                                                <p style="font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 4px;">${item.category}</p>
-                                                <h4 style="margin: 0 0 8px; font-size: 14px; font-family: Georgia, serif;">${item.name}</h4>
-                                                <p style="margin: 0; font-size: 11px; color: #666; line-height: 1.4;">${item.description}</p>
+                                            <div style="background: #fafafa; border-radius: 12px; overflow: hidden; text-align: center;">
+                                                ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${item.name}" style="width: 100%; height: 140px; object-fit: cover; display: block;" />` : ''}
+                                                <div style="padding: 16px;">
+                                                    <p style="font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 4px;">${item.category}</p>
+                                                    <h4 style="margin: 0 0 8px; font-size: 14px; font-family: Georgia, serif;">${item.name}</h4>
+                                                    <p style="margin: 0; font-size: 11px; color: #666; line-height: 1.4;">${item.description}</p>
+                                                </div>
                                             </div>
                                         </td>
                                     `).join('')}
