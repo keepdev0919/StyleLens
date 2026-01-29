@@ -3,9 +3,11 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { useSettings } from '../context/SettingsContext';
 import { t } from '../i18n';
+import { useDocumentMeta } from '../hooks/useDocumentMeta';
 
 export default function PrivacyPage() {
     const { language } = useSettings();
+    useDocumentMeta('privacy');
 
     return (
         <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">

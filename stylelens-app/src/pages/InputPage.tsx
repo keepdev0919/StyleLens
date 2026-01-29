@@ -6,10 +6,12 @@ import UnitToggle from '../components/UnitToggle';
 import { useSettings } from '../context/SettingsContext';
 import { t } from '../i18n';
 import { cmToFtIn, ftInToCm, kgToLbs, lbsToKg } from '../utils/unitConversion';
+import { useDocumentMeta } from '../hooks/useDocumentMeta';
 
 export default function InputPage() {
     const navigate = useNavigate();
     const { language, unitSystem } = useSettings();
+    useDocumentMeta('input');
 
     const [formData, setFormData] = useState({
         photo: null as File | null,

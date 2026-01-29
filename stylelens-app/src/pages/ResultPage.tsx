@@ -6,6 +6,7 @@ import Footer from '../components/Footer';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useSettings } from '../context/SettingsContext';
 import { t } from '../i18n';
+import { useDocumentMeta } from '../hooks/useDocumentMeta';
 
 // Interfaces
 interface ShoppingItem {
@@ -96,6 +97,7 @@ export default function ResultPage() {
     const location = useLocation();
     const { userImage, height, weight, gender, orderId, customerEmail } = location.state || {};
     const { language } = useSettings();
+    useDocumentMeta('result', { noIndex: true });
     const [analysis, setAnalysis] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

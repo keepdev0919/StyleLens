@@ -1,0 +1,10 @@
+# robots.txt for StyleLens
+User-agent: *
+Allow: /
+Disallow: /result
+
+# Sitemaps
+Sitemap: https://stylelens.style/sitemap.xml
+
+# Crawl-delay (optional, for polite crawling)
+Crawl-delay: 1
